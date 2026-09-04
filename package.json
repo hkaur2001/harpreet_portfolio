@@ -1,12 +1,13 @@
 {
   "name": "harpreet-portfolio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "evals:offline": "node scripts/run-evals.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
