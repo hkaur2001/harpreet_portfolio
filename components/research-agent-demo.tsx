@@ -7,7 +7,7 @@ type ResearchResult = {
   sources: Array<{ title: string; url: string; sourceType: string }>;
   evaluation: { relevance: number; synthesis: number; actionability: number; sourceDiversity: number; citationCoverage: number; notes: string };
   coverage: string[];
-  metrics: { model: string; searchTool: string; latencyMs: number; sourceCount: number };
+  metrics: { model: string; searchTool: string; judge: string; providerRetries: number; degraded: boolean; degradedReasons: string[]; latencyMs: number; sourceCount: number };
 };
 
 export function ResearchAgentDemo() {
@@ -39,16 +39,17 @@ export function ResearchAgentDemo() {
         <textarea id="topics" value={topics} onChange={(e) => setTopics(e.target.value)} rows={4} className="mt-3 w-full rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm outline-none focus:border-[var(--ink)]" />
         <div className="mt-5 rounded-2xl bg-[var(--bg)] p-4 text-xs leading-5 text-[var(--muted)]"><strong className="text-[var(--ink)]">Source policy:</strong> the agent searches the public web for Reddit discussions, newsletter/blog posts, public LinkedIn posts when indexable, and primary technical sources. It reports source gaps instead of pretending a closed or inaccessible source was searched.</div>
         <button onClick={run} disabled={loading} className="btn-primary mt-6 w-full rounded-full px-5 disabled:opacity-60">{loading ? "Researching sources…" : "Build my research brief →"}</button>
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       </div>
 
       <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6">
         {!result ? <div className="grid min-h-[520px] place-items-center text-center"><div><p className="text-lg font-semibold">The goal controls what counts as useful.</p><p className="mt-3 max-w-lg text-sm leading-6 text-[var(--muted)]">A general trend summary is easy. This agent is evaluated on whether it finds evidence that is specifically useful for the professional goal you gave it.</p></div></div> : <div>
+          {result.metrics.degraded && <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">Live research was unavailable, so this run degraded safely.</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">{result.metrics.degradedReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul><p className="mt-2 text-xs">No fresh-web claims are invented in this mode.</p></div>}
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--signal)]">Personalized digest</p>
           <div className="mt-4 whitespace-pre-wrap rounded-2xl bg-[var(--bg)] p-5 text-sm leading-7">{result.digest}</div>
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">{[["Relevance", result.evaluation.relevance], ["Synthesis", result.evaluation.synthesis], ["Actionability", result.evaluation.actionability], ["Diversity", result.evaluation.sourceDiversity], ["Citations", result.evaluation.citationCoverage]].map(([label, value]) => <div key={String(label)} className="rounded-xl bg-[var(--bg)] p-3"><p className="text-2xl font-semibold">{value}/5</p><p className="mt-1 text-[11px] text-[var(--muted)]">{label}</p></div>)}</div>
-          <details className="mt-5 rounded-2xl border border-[var(--line)] p-4"><summary className="cursor-pointer font-semibold">Sources used <span className="float-right">+</span></summary><div className="mt-4 space-y-2">{result.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="block rounded-xl bg-[var(--bg)] p-3 text-sm hover:underline"><span className="mr-2 font-mono text-[10px] uppercase text-[var(--signal)]">{source.sourceType}</span>{source.title || source.url}</a>)}</div></details>
-          <p className="mt-4 text-xs leading-5 text-[var(--muted)]">Coverage: {result.coverage.join(" · ")} · {result.metrics.sourceCount} sources · {result.metrics.model} + {result.metrics.searchTool} · {result.metrics.latencyMs} ms</p>
+          <details className="mt-5 rounded-2xl border border-[var(--line)] p-4"><summary className="cursor-pointer font-semibold">Sources used <span className="float-right">+</span></summary><div className="mt-4 space-y-2">{result.sources.length ? result.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="block rounded-xl bg-[var(--bg)] p-3 text-sm hover:underline"><span className="mr-2 font-mono text-[10px] uppercase text-[var(--signal)]">{source.sourceType}</span>{source.title || source.url}</a>) : <p className="text-sm text-[var(--muted)]">No live sources were returned in this run.</p>}</div></details>
+          <p className="mt-4 text-xs leading-5 text-[var(--muted)]">Coverage: {result.coverage.join(" · ")} · {result.metrics.sourceCount} sources · generation: {result.metrics.model} · search: {result.metrics.searchTool} · judge: {result.metrics.judge} · retries: {result.metrics.providerRetries} · {result.metrics.latencyMs} ms</p>
         </div>}
       </div>
     </div>
