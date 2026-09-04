@@ -19,6 +19,16 @@ const voiceSamples = [
   "The best product demos answer one question quickly: what changed for the user after this existed? Architecture matters, but the outcome should still be obvious.",
 ].join("\n---\n");
 
+const localVoiceRetrieval = {
+  model: "Xenova/bge-small-en-v1.5",
+  engine: "Hugging Face Transformers.js · browser-local embeddings",
+  ranked: [
+    { index: 1, score: 0.88 },
+    { index: 0, score: 0.81 },
+    { index: 2, score: 0.73 },
+  ],
+};
+
 async function request(path, init = {}, expected = [200]) {
   const response = await fetch(`${base}${path}`, { ...init, signal: AbortSignal.timeout(20_000) });
   const text = await response.text();
@@ -90,12 +100,31 @@ async function main() {
     const result = await request("/api/voice-agent/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ samples: voiceSamples, brief: `Write a LinkedIn post about designing AI evaluation before launch. Test run ${i}.`, format: "LinkedIn post" }),
+      body: JSON.stringify({
+        samples: voiceSamples,
+        brief: `Write a LinkedIn post about designing AI evaluation before launch. Test run ${i}.`,
+        format: "LinkedIn post",
+        retrieval: localVoiceRetrieval,
+      }),
     });
     if (!result.json?.draft || !result.json?.styleProfile || !result.json?.evaluation) throw new Error("Voiceprint response contract failed.");
+    if (!String(result.json?.metrics?.retrieval ?? "").includes("bge-small-en-v1.5")) throw new Error("Voiceprint did not honor the local embedding retrieval contract.");
     return result;
   });
   assertRetryObserved("Voiceprint", voiceResults);
+
+  const voiceLexicalFallback = await request("/api/voice-agent/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      samples: voiceSamples,
+      brief: "Write a LinkedIn post about graceful degradation in AI products.",
+      format: "LinkedIn post",
+      localRetrievalError: "synthetic browser embedding failure",
+    }),
+  });
+  if (!String(voiceLexicalFallback.json?.metrics?.retrieval ?? "").includes("lexical")) throw new Error("Voiceprint lexical fallback did not activate.");
+  console.log("✓ Voiceprint local-embedding failure fallback");
 
   const researchResults = await concurrent("SignalBrief burst", 20, async (i) => {
     const result = await request("/api/research-agent/run", {
