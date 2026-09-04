@@ -45,9 +45,9 @@ export default function VoiceAgentPage() {
             metrics={[
               { name: "Style fidelity", plain: "Does the output match recurring tone and structure from the examples without parroting them?", method: "LLM judge", target: "≥ 4/5" },
               { name: "Brief adherence", plain: "Did the output actually cover the requested topic and constraints?", method: "LLM judge", target: "≥ 4/5" },
-              { name: "Originality", plain: "Is the draft new rather than copied from a source sample?", method: "LLM judge + deterministic gate", target: "≥ 4/5" },
+              { name: "Originality", plain: "Is the draft new rather than copied from a source sample? The model score is combined with a hard phrase-copy gate.", method: "Composite", target: "≥ 4/5" },
               { name: "Longest copied phrase", plain: "A hard check counts the longest identical token sequence shared with any example.", method: "Deterministic", target: "< 8 tokens" },
-              { name: "Retrieval robustness", plain: "Can semantic retrieval still work without depending on a remote embedding request?", method: "Browser-local HF model + fallback test", target: "No remote embedding dependency" },
+              { name: "Retrieval robustness", plain: "Can semantic retrieval work without depending on a remote embedding request?", method: "Reliability test", target: "No remote embedding dependency" },
               { name: "Human preference", plain: "When two versions are shown blindly, would the creator choose the personalized version?", method: "Human review", target: "> 70%" },
             ]}
           />
