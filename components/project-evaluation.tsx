@@ -1,7 +1,7 @@
 type Metric = {
   name: string;
   plain: string;
-  method: "Deterministic" | "LLM judge" | "Human review" | "Product metric";
+  method: "Deterministic" | "LLM judge" | "Human review" | "Product metric" | "Composite" | "Reliability test";
   target: string;
 };
 
@@ -29,7 +29,7 @@ export function ProjectEvaluation({
             </div>
           ))}
         </div>
-        <p className="mt-4 text-xs leading-5 text-[var(--muted)]">Industry-style evaluation mixes hard checks with model-based scoring and human review. A single score is rarely enough: each project needs metrics tied to its actual failure modes.</p>
+        <p className="mt-4 text-xs leading-5 text-[var(--muted)]">Industry-style evaluation mixes hard checks, model-based scoring, reliability tests, product outcomes, and human review. A single score is rarely enough: each project needs metrics tied to its actual failure modes.</p>
       </div>
     </details>
   );
