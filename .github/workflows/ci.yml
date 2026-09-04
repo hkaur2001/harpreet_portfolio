@@ -16,19 +16,21 @@ jobs:
       - run: npm run typecheck
       - run: npm run evals:offline
       - run: npm run build
-      - name: Run production HTTP stress suite
+      - name: Run production HTTP stress suite with injected 429s
         run: |
-          npm run start -- -H 127.0.0.1 -p 3000 >/tmp/portfolio-next.log 2>&1 &
+          node scripts/mock-openai.mjs >/tmp/mock-openai.log 2>&1 &
+          MOCK_PID=$!
+          OPENAI_API_KEY=ci-test-key OPENAI_BASE_URL=http://127.0.0.1:8787/v1 npm run start -- -H 127.0.0.1 -p 3000 >/tmp/portfolio-next.log 2>&1 &
           APP_PID=$!
-          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+          trap 'kill $APP_PID $MOCK_PID 2>/dev/null || true' EXIT
           for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null; then
-              break
+            if curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null && curl -fsS http://127.0.0.1:8787/ >/dev/null 2>&1 || true; then
+              if curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null; then break; fi
             fi
             sleep 1
           done
           curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null || (cat /tmp/portfolio-next.log && exit 1)
-          npm run stress:http
+          EXPECT_PROVIDER_RETRIES=1 npm run stress:http
 
   agent-runtime:
     runs-on: ubuntu-latest
