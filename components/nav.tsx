@@ -10,7 +10,7 @@ export function Nav() {
           <span className="hidden sm:inline">{site.name}</span>
         </Link>
         <nav className="flex items-center gap-5 text-sm text-[var(--muted)]">
-          <Link className="transition hover:text-[var(--ink)]" href="/#projects">Projects</Link>
+          <Link className="transition hover:text-[var(--ink)]" href="/projects">Projects</Link>
           <Link className="transition hover:text-[var(--ink)]" href="/#experience">Experience</Link>
           <Link className="transition hover:text-[var(--ink)]" href="/#thinking">Thinking</Link>
           <a className="rounded-full border border-[var(--ink)] px-4 py-2 font-medium text-[var(--ink)] transition hover:bg-[var(--ink)] hover:text-[var(--bg)]" href={`mailto:${site.email}`}>Contact</a>
