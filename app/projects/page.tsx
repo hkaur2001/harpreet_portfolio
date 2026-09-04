@@ -14,17 +14,8 @@ const projects = [
     purpose: "Find the cause of a production failure before changing the wrong thing.",
     body: "Sentinel investigates simulated production incidents by inspecting metrics, logs, deployments, database health, source changes, runbooks, and prior incidents. The model can recommend a remediation, but deterministic policy and human approval control whether it can proceed.",
     href: "/projects/sentinel",
-    steps: [
-      ["Receive an incident", "Start from a symptom, not a pre-labeled root cause."],
-      ["Choose tools", "The model decides which bounded evidence source to inspect next."],
-      ["Build a diagnosis", "Observations update the hypothesis and confidence."],
-      ["Recommend safely", "Policy code sits between the model and any simulated remediation."],
-    ],
-    groups: [
-      ["AI", ["OpenAI Responses API", "Tool calling", "MCP", "Model routing", "Structured outputs"]],
-      ["Backend", ["Python", "FastAPI", "Pydantic", "PostgreSQL", "pgvector"]],
-      ["Production", ["Docker", "Kubernetes", "Terraform", "Redis", "GitHub Actions", "Observability"]],
-    ],
+    steps: [["Receive an incident", "Start from a symptom, not a pre-labeled root cause."], ["Choose tools", "The model decides which bounded evidence source to inspect next."], ["Build a diagnosis", "Observations update the hypothesis and confidence."], ["Recommend safely", "Policy code sits between the model and any simulated remediation."]],
+    groups: [["AI", ["OpenAI Responses API", "Tool calling", "MCP", "Model routing", "Structured outputs"]], ["Backend", ["Python", "FastAPI", "Pydantic", "PostgreSQL", "pgvector"]], ["Production", ["Docker", "Kubernetes", "Terraform", "Redis", "GitHub Actions", "Observability"]]],
   },
   {
     number: "02",
@@ -76,6 +67,7 @@ export default function ProjectsPage() {
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Selected projects</p>
           <h1 className="mt-5 max-w-5xl text-balance text-5xl font-semibold tracking-[-0.05em] md:text-7xl">Different problems need different systems.</h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Each project starts with a plain-language problem. Expand “How does it work?” only when you want the architecture and tool depth.</p>
+          <div className="mt-8 flex flex-wrap gap-3"><Link href="/projects/evaluations" className="btn-secondary">How I evaluate these systems →</Link><Link href="/" className="btn-secondary">Back to portfolio</Link></div>
         </div>
       </section>
       <section>
@@ -90,10 +82,7 @@ export default function ProjectsPage() {
                   <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{project.body}</p>
                   <Link href={project.href} className="btn-primary mt-7 rounded-full px-5">Open project →</Link>
                 </div>
-                <ProjectHowItWorks
-                  steps={project.steps.map(([title, body]) => ({ title, body }))}
-                  toolGroups={project.groups.map(([label, items]) => ({ label, items: [...items] }))}
-                />
+                <ProjectHowItWorks steps={project.steps.map(([title, body]) => ({ title, body }))} toolGroups={project.groups.map(([label, items]) => ({ label, items: [...items] }))} />
               </div>
             </article>
           ))}
