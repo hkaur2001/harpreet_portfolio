@@ -1,113 +1,137 @@
-# Harpreet Kaur — Applied AI / Forward Deployed Engineering Portfolio
+# Harpreet Kaur — Software Engineering, Applied AI & Forward Deployed Systems
 
-A production-style portfolio built to show how I approach AI systems in the real world: agents, RAG, enterprise integrations, evaluation, governance, observability, and measurable workflow value.
+This repository is a public proof-of-work portfolio: production-style applications, system design, interactive AI workflows, evaluation, security boundaries, data integrations, and deployable code.
 
-## Positioning
+**Live portfolio:** https://harpreet-portfolio-tau.vercel.app
 
-> **I build AI systems that survive contact with the enterprise.**
+## Flagship: Sentinel
 
-I currently build enterprise AI systems at **S&P Global**, with experience spanning 8+ enterprise integrations, 500K+ knowledge assets, and systems serving an organization of 40K+ users.
+**Sentinel** is an AI production incident-response platform. A visitor can inject a simulated incident and watch the system investigate it across metrics, logs, deployments, database diagnostics, service health, source changes, runbooks, and prior incidents.
 
-This repository is intentionally not a resume mirror. It is a proof artifact: architecture, tradeoffs, interactive demos, evaluation thinking, and code.
+The interesting part is the control architecture:
 
-## What is inside
+```text
+incident
+   ↓
+Investigation Agent
+   ↓
+read-only Tool Gateway ──→ logs / metrics / deploys / DB / runbooks / source changes
+   ↓
+evidence-backed diagnosis
+   ↓
+deterministic Policy Engine
+   ├── allowed → simulated execution
+   ├── approval → human decision → simulated execution
+   └── denied
+   ↓
+recovery verification + postmortem
+```
 
-### Public portfolio
-- Next.js 16.3 / React 19.2
+### Sentinel demonstrates
+
+- OpenAI Responses API function/tool calling
+- adaptive model → tool → observation loops
+- model routing and per-run token/cost telemetry
+- bounded tool schemas and connector contracts
+- MCP exposure of the same read-only tool surface
+- deterministic authorization/risk policy
+- human approval for production-impacting actions
+- prompt-injection labeling for untrusted logs/tool output
+- evidence IDs and alternative hypotheses
+- reproducible failure injection
+- deterministic safety/evaluation suite
+- FastAPI + OpenAPI reference backend
+- PostgreSQL + pgvector persistence schema
+- Docker Compose local platform
+- Terraform AWS deployment reference
+- GitHub Actions CI
+
+Public remediation changes **simulated infrastructure only**. The model never receives direct production credentials or arbitrary shell/SQL access.
+
+See [`sentinel/`](./sentinel) for the deeper backend, MCP, database, simulator, infrastructure, tests, and architecture decisions.
+
+## Other builds
+
+### AI Policy Radar
+A live-data product using the Federal Register API. It demonstrates server-side external API integration, caching, normalization, provenance, and upstream failure handling without forcing an LLM into a problem that does not need one.
+
+### Agent Systems Lab
+Focused server-executed workflows for permission-aware retrieval, technical discovery/architecture, and AI reliability behavior. They expose tools, evidence, decisions, and metrics rather than hiding behavior behind a chat interface.
+
+### ContextOps
+A permission-aware retrieval proof focused on authorization before generation, metadata filtering, source grounding, and run-level evaluation.
+
+## Professional context
+
+I build enterprise AI and data systems at **S&P Global**. My production work has included patterns spanning 8+ enterprise integrations, more than 500K knowledge assets, and systems designed for an organization of 40K+ users.
+
+No proprietary employer data, credentials, internal URLs, or internal source code are used in these public projects.
+
+## Web stack
+
+- Next.js 16.3
+- React 19.2
 - TypeScript
 - Tailwind CSS 4.3
-- Responsive, dark/light adaptive design
-- Detailed flagship case study
-- Interactive subscription-free agent demos
+- OpenAI SDK (server-side only)
+- Vercel
 
-### Agent labs
-1. **ContextOps** — permission-aware RAG + MCP-style tools + evals
-2. **Solution Architect Agent** — customer discovery + architecture + ROI hypothesis
-3. **Incident Commander** — AI production incident triage + safe reversible actions
-
-All demos run without paid APIs. Synthetic enterprise data is used by default so the repository is safe to inspect publicly and never depends on employer systems.
-
-### Python reference runtime
-`services/agent-runtime` contains a small FastAPI implementation of:
-- permission pre-filtering
-- retrieval
-- typed tool traces
-- citations
-- latency / cost metrics
-- safety regression tests
-
-## Run the website
-
-Requirements:
-- Node.js 22+
-- npm
+Run locally:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
-
-## Run the Python agent runtime
+Optional live Sentinel reasoning:
 
 ```bash
-cd services/agent-runtime
+export OPENAI_API_KEY="..."
+```
+
+Never expose the provider key through a `NEXT_PUBLIC_` environment variable.
+
+## Sentinel reference backend
+
+```bash
+cd sentinel/backend
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+pytest -q
+uvicorn app.main:app --reload
 ```
 
-Then open `http://localhost:8000/docs`.
+Open `http://localhost:8000/docs` for the API surface.
 
-Example request:
+To start the local Postgres/pgvector + Redis + API platform from the repository root:
 
 ```bash
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{"question":"Can everyone access the Q3 pricing playbook?","groups":["everyone"]}'
+docker compose -f sentinel/docker-compose.yml up --build
 ```
 
-## Evaluation philosophy
+## CI
 
-The flagship system treats the following as separate release gates:
-- context relevance
-- groundedness
-- answer relevance
-- permission compliance
-- citation coverage
-- tool correctness
-- latency and cost
+GitHub Actions independently validates:
+- TypeScript typecheck
+- Next.js production build
+- existing Python agent runtime tests
+- Sentinel Python backend safety/policy tests
 
-The synthetic demo does not fabricate financial ROI. A real pilot should baseline the workflow first and calculate value from observed adoption and time saved.
-
-## Deployment
-
-### Vercel
-1. Import this repository into Vercel.
-2. Framework preset: Next.js.
-3. No environment variables are required for deterministic demo mode.
-4. Deploy.
-
-### Other providers
-Any Node-compatible platform that supports Next.js can host the web app. The FastAPI runtime can be containerized separately if you want the portfolio to call the Python service instead of the built-in deterministic UI simulation.
-
-## Public-data policy
+## Public-data and secret policy
 
 Do not commit:
-- confidential S&P Global source data
-- internal URLs
-- credentials / tokens
-- proprietary documents
+- S&P Global proprietary data or source code
 - customer information
-- internal screenshots containing sensitive data
+- internal URLs/screenshots
+- credentials, tokens, or `.env` files
+- production infrastructure secrets
 
-The project architecture is inspired by production engineering constraints, but all demo content is synthetic.
+Synthetic operational data is used where a safe, reproducible environment is needed. Live public data is source-linked where used.
 
 ## Contact
 
 **Harpreet Kaur** · New York, NY  
-harpreetkaur622@gmail.com  
+Harpreetkaur622@gmail.com  
 LinkedIn: https://www.linkedin.com/in/harpreet-kaur-0501/  
 GitHub: https://github.com/hkaur2001

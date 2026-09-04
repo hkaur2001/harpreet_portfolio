@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "scenarios": [
+    {"id":"database_connection_exhaustion","service":"payment-service","severity":"SEV-1","failure":"Worker concurrency increase exhausts database connections","expected_action":"rollback_deployment"},
+    {"id":"api_latency_spike","service":"inventory-service","severity":"SEV-2","failure":"Serial downstream fan-out increases critical-path latency","expected_action":"rollback_deployment"},
+    {"id":"bad_deployment","service":"order-service","severity":"SEV-1","failure":"Release lowers upstream timeout and creates a timeout storm","expected_action":"rollback_deployment"},
+    {"id":"memory_leak","service":"customer-service","severity":"SEV-2","failure":"Heap grows independently of traffic until instances restart","expected_action":"restart_service"},
+    {"id":"service_down","service":"notification-service","severity":"SEV-1","failure":"Configuration rollout removes required bootstrap setting","expected_action":"rollback_deployment"},
+    {"id":"network_failure","service":"gateway-service","severity":"SEV-2","failure":"Cross-region packet loss while local traffic remains healthy","expected_action":"send_notification"},
+    {"id":"schema_change","service":"analytics-pipeline","severity":"SEV-2","failure":"Breaking producer schema causes consumer rejection and backlog","expected_action":"rollback_deployment"},
+    {"id":"authentication_failure","service":"auth-service","severity":"SEV-1","failure":"Stale JWKS cache after signing-key rotation rejects new tokens","expected_action":"refresh_key_cache"},
+    {"id":"queue_backlog","service":"order-events-consumer","severity":"SEV-2","failure":"OOM kills reduce consumer capacity and create Kafka lag","expected_action":"scale_service"},
+    {"id":"unknown_failure","service":"checkout-service","severity":"SEV-2","failure":"Conflicting evidence and incomplete telemetry require escalation","expected_action":"no_action"}
+  ]
+}
