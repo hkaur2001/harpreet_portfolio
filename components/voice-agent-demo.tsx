@@ -14,7 +14,16 @@ type VoiceResult = {
     copyRisk: string;
     revisionPerformed: boolean;
   };
-  metrics: { model: string; retrieval: string; latencyMs: number; sampleCount: number };
+  metrics: {
+    model: string;
+    retrieval: string;
+    judge: string;
+    providerRetries: number;
+    degraded: boolean;
+    degradedReasons: string[];
+    latencyMs: number;
+    sampleCount: number;
+  };
 };
 
 const starter = `I keep seeing teams reach for more AI before they have made the workflow observable. The model is rarely the only thing that needs debugging.\n---\nA good automation should make the boring path boring. The interesting engineering is in the exceptions: permissions, retries, ownership, and recovery.\n---\nThe best product demos answer one question quickly: what changed for the user after this existed? Architecture matters, but the outcome should still be obvious.`;
@@ -66,7 +75,7 @@ export function VoiceAgentDemo() {
           <option>Email intro</option>
         </select>
         <button onClick={run} disabled={loading} className="btn-primary mt-6 w-full rounded-full px-5 disabled:opacity-60">{loading ? "Learning the voice…" : "Draft in this voice →"}</button>
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       </div>
 
       <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6">
@@ -74,6 +83,7 @@ export function VoiceAgentDemo() {
           <div className="grid min-h-[520px] place-items-center text-center"><div><p className="text-lg font-semibold">The output is inspectable, not just generated.</p><p className="mt-3 max-w-md text-sm leading-6 text-[var(--muted)]">After a run, this panel shows the learned style profile, which examples were retrieved, the draft, and an evaluation scorecard.</p></div></div>
         ) : (
           <div>
+            {result.metrics.degraded && <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">This run completed in degraded mode instead of failing.</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">{result.metrics.degradedReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>}
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--signal)]">Generated draft</p>
             <div className="mt-4 whitespace-pre-wrap rounded-2xl bg-[var(--bg)] p-5 text-sm leading-7">{result.draft}</div>
 
@@ -90,7 +100,7 @@ export function VoiceAgentDemo() {
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[["Style", result.evaluation.styleFidelity], ["Brief", result.evaluation.briefAdherence], ["Platform", result.evaluation.platformFit], ["Originality", result.evaluation.originality]].map(([label, value]) => <div key={String(label)} className="rounded-xl bg-[var(--bg)] p-3"><p className="text-2xl font-semibold">{value}/5</p><p className="mt-1 text-[11px] text-[var(--muted)]">{label}</p></div>)}
             </div>
-            <p className="mt-4 text-xs leading-5 text-[var(--muted)]">Model: {result.metrics.model} · retrieval: {result.metrics.retrieval} · {result.metrics.sampleCount} samples · {result.metrics.latencyMs} ms · copy risk: {result.evaluation.copyRisk}{result.evaluation.revisionPerformed ? " · one automatic revision was applied" : ""}</p>
+            <p className="mt-4 text-xs leading-5 text-[var(--muted)]">Generation: {result.metrics.model} · retrieval: {result.metrics.retrieval} · judge: {result.metrics.judge} · retries: {result.metrics.providerRetries} · {result.metrics.sampleCount} samples · {result.metrics.latencyMs} ms · copy risk: {result.evaluation.copyRisk}{result.evaluation.revisionPerformed ? " · one automatic revision was applied" : ""}</p>
           </div>
         )}
       </div>
