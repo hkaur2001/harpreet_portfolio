@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
 
 export const runtime = "nodejs";
 
@@ -50,17 +51,11 @@ function lexicalScore(question: string, doc: KnowledgeDoc) {
 }
 
 async function embed(input: string[], apiKey: string) {
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
+  return fetchJsonWithRetry<{ data?: Array<{ embedding?: number[] }>; usage?: { total_tokens?: number } }>(openAiUrl("embeddings"), {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "text-embedding-3-small", input }),
-    signal: AbortSignal.timeout(12_000),
-  });
-  if (!response.ok) throw new Error(`Embedding request failed (${response.status}).`);
-  const body = await response.json() as { data?: Array<{ embedding?: number[] }>; usage?: { total_tokens?: number } };
-  const vectors = body.data?.map((item) => item.embedding ?? []) ?? [];
-  if (vectors.length !== input.length) throw new Error("Embedding response was incomplete.");
-  return { vectors, tokens: body.usage?.total_tokens ?? 0 };
+  }, { attempts: 3, baseDelayMs: 220, maxDelayMs: 1200, timeoutMs: 12_000 });
 }
 
 function responseText(body: unknown) {
@@ -75,7 +70,7 @@ function responseText(body: unknown) {
 
 async function answerWithModel(question: string, docs: Array<{ doc: KnowledgeDoc; score: number }>, apiKey: string) {
   const context = docs.map(({ doc }) => `[${doc.id}] ${doc.title}\nOwner: ${doc.owner}\n${doc.content}`).join("\n\n");
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  return fetchJsonWithRetry<{ output?: Array<{ content?: Array<{ type?: string; text?: string }> }>; usage?: { input_tokens?: number; output_tokens?: number } }>(openAiUrl("responses"), {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -84,11 +79,7 @@ async function answerWithModel(question: string, docs: Array<{ doc: KnowledgeDoc
       max_output_tokens: 450,
       input: `You answer only from the supplied authorized sources. If the sources do not support the answer, say that clearly. Cite factual claims with source IDs in square brackets. Do not infer or mention documents that are not present in the authorized context.\n\nQuestion: ${question}\n\nAuthorized sources:\n${context}`,
     }),
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) throw new Error(`Answer request failed (${response.status}).`);
-  const body = await response.json() as { usage?: { input_tokens?: number; output_tokens?: number } };
-  return { text: responseText(body), usage: body.usage ?? {} };
+  }, { attempts: 3, baseDelayMs: 250, maxDelayMs: 1400, timeoutMs: 20_000 });
 }
 
 export async function POST(request: NextRequest) {
@@ -103,6 +94,8 @@ export async function POST(request: NextRequest) {
     const allowed = DOCS.filter((doc) => doc.groups.some((group) => groups.has(group)));
     const blockedCount = DOCS.length - allowed.length;
     const apiKey = process.env.OPENAI_API_KEY;
+    const degradedReasons: string[] = [];
+    let providerRetries = 0;
 
     let ranked: Array<{ doc: KnowledgeDoc; score: number }>;
     let retrievalMode = "lexical fallback";
@@ -110,17 +103,21 @@ export async function POST(request: NextRequest) {
 
     if (apiKey) {
       try {
-        const inputs = [question, ...allowed.map((doc) => `${doc.title}\n${doc.content}`)];
-        const embedded = await embed(inputs, apiKey);
-        const [queryVector, ...docVectors] = embedded.vectors;
-        embeddingTokens = embedded.tokens;
+        const embedded = await embed([question, ...allowed.map((doc) => `${doc.title}\n${doc.content}`)], apiKey);
+        providerRetries += embedded.retries;
+        const vectors = embedded.data.data?.map((item) => item.embedding ?? []) ?? [];
+        embeddingTokens = embedded.data.usage?.total_tokens ?? 0;
+        const [queryVector, ...docVectors] = vectors;
+        if (vectors.length !== allowed.length + 1) throw new Error("Embedding response was incomplete.");
         ranked = allowed.map((doc, index) => ({ doc, score: cosine(queryVector, docVectors[index]) })).sort((a, b) => b.score - a.score).slice(0, 3);
         retrievalMode = "OpenAI embeddings";
       } catch {
         ranked = allowed.map((doc) => ({ doc, score: lexicalScore(question, doc) })).sort((a, b) => b.score - a.score).slice(0, 3);
+        degradedReasons.push("Semantic embeddings were unavailable; lexical retrieval preserved the authorization boundary.");
       }
     } else {
       ranked = allowed.map((doc) => ({ doc, score: lexicalScore(question, doc) })).sort((a, b) => b.score - a.score).slice(0, 3);
+      degradedReasons.push("Live model configuration is unavailable; deterministic retrieval mode is active.");
     }
 
     const strong = ranked.filter((item) => item.score >= (retrievalMode === "OpenAI embeddings" ? 0.22 : 0.08));
@@ -134,8 +131,8 @@ export async function POST(request: NextRequest) {
           ["Retrieve", "No sufficiently relevant authorized source found"],
           ["Answer guard", "Stopped before generation rather than guessing"],
         ],
-        metrics: { retrievalMode, embeddingTokens, blockedCount, latencyMs: Date.now() - started, model: "not called" },
-      });
+        metrics: { retrievalMode, embeddingTokens, blockedCount, providerRetries, degraded: degradedReasons.length > 0, degradedReasons, latencyMs: Date.now() - started, model: "not called" },
+      }, { headers: { "Cache-Control": "no-store" } });
     }
 
     let answer = strong.map(({ doc }) => `${doc.title}: ${doc.content}`).join("\n");
@@ -145,12 +142,15 @@ export async function POST(request: NextRequest) {
     if (apiKey) {
       try {
         const generated = await answerWithModel(question, strong, apiKey);
-        if (generated.text) answer = generated.text;
-        model = "gpt-5.6-luna";
-        inputTokens = generated.usage.input_tokens ?? 0;
-        outputTokens = generated.usage.output_tokens ?? 0;
+        providerRetries += generated.retries;
+        const text = responseText(generated.data);
+        if (text) answer = text;
+        model = text ? "gpt-5.6-luna" : "deterministic fallback";
+        inputTokens = generated.data.usage?.input_tokens ?? 0;
+        outputTokens = generated.data.usage?.output_tokens ?? 0;
+        if (!text) degradedReasons.push("The model returned no usable text; retrieved authorized evidence was returned directly.");
       } catch {
-        // The retrieval result remains usable even if generation is temporarily unavailable.
+        degradedReasons.push("Generation was rate-limited or unavailable; retrieved authorized evidence was returned directly.");
       }
     }
 
@@ -161,12 +161,12 @@ export async function POST(request: NextRequest) {
         ["Resolve identity", `Persona=${persona}; groups=${[...groups].join(", ")}`],
         ["Apply access filter", `${allowed.length} documents searchable; ${blockedCount} unavailable to this identity`],
         ["Retrieve", `${strong.length} authorized sources selected with ${retrievalMode}`],
-        ["Generate", model === "deterministic fallback" ? "Returned retrieved evidence without a model call" : "Generated a grounded answer from authorized context only"],
+        ["Generate", model === "deterministic fallback" ? "Returned retrieved evidence without a model-generated answer" : "Generated a grounded answer from authorized context only"],
         ["Cite", `${strong.length} source records returned with the answer`],
       ],
-      metrics: { retrievalMode, embeddingTokens, blockedCount, latencyMs: Date.now() - started, model, inputTokens, outputTokens },
-    });
+      metrics: { retrievalMode, embeddingTokens, blockedCount, providerRetries, degraded: degradedReasons.length > 0, degradedReasons, latencyMs: Date.now() - started, model, inputTokens, outputTokens },
+    }, { headers: { "Cache-Control": "no-store" } });
   } catch {
-    return NextResponse.json({ error: "The knowledge workflow could not complete this request." }, { status: 500 });
+    return NextResponse.json({ error: "The knowledge workflow could not parse this request." }, { status: 400 });
   }
 }
