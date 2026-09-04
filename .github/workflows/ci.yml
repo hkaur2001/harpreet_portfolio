@@ -44,4 +44,10 @@ jobs:
           cache: pip
           cache-dependency-path: sentinel/backend/requirements.txt
       - run: pip install -r requirements.txt
+      - name: Compile and import runtime surfaces
+        run: |
+          python -m compileall -q app
+          python -c "import app.main; import app.mcp_server"
       - run: python -m pytest -q
+      - name: Validate local platform configuration
+        run: docker compose -f ../docker-compose.yml config >/dev/null
