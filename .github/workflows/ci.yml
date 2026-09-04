@@ -29,7 +29,7 @@ jobs:
           cache: pip
           cache-dependency-path: services/agent-runtime/requirements.txt
       - run: pip install -r requirements.txt
-      - run: pytest -q
+      - run: python -m pytest -q
 
   sentinel-backend:
     runs-on: ubuntu-latest
@@ -44,4 +44,4 @@ jobs:
           cache: pip
           cache-dependency-path: sentinel/backend/requirements.txt
       - run: pip install -r requirements.txt
-      - run: pytest -q
+      - run: python -m pytest -q
