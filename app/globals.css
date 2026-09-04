@@ -11,6 +11,10 @@
   --signal-soft: #e8edff;
   --green: #087f5b;
   --orange: #b25b00;
+  --button-bg: #171717;
+  --button-fg: #ffffff;
+  --button-secondary-bg: #ffffff;
+  --button-secondary-fg: #171717;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +29,10 @@
     --signal-soft: #17213f;
     --green: #79d9b4;
     --orange: #f4ad62;
+    --button-bg: #f4f4ee;
+    --button-fg: #0c0d0e;
+    --button-secondary-bg: #111315;
+    --button-secondary-fg: #f4f4ee;
   }
 }
 
@@ -33,10 +41,17 @@ html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-rendering: optimizeLegibility; }
 ::selection { background: var(--signal); color: white; }
 a { color: inherit; }
+button, select, input, textarea { font: inherit; }
+button { color: inherit; }
 .grid-field { background-image: linear-gradient(to right, color-mix(in srgb, var(--line) 42%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--line) 42%, transparent) 1px, transparent 1px); background-size: 32px 32px; }
 .text-balance { text-wrap: balance; }
 .code-scroll::-webkit-scrollbar { height: 8px; }
 .code-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
 .reveal { animation: reveal 650ms cubic-bezier(.2,.8,.2,1) both; }
+.btn-primary { display: inline-flex; align-items: center; justify-content: center; border-radius: 0.75rem; background: var(--button-bg) !important; color: var(--button-fg) !important; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 700; line-height: 1.25rem; transition: opacity 160ms ease, transform 160ms ease; }
+.btn-primary:hover { opacity: .86; }
+.btn-primary:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+.btn-secondary { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ink); border-radius: 999px; background: var(--button-secondary-bg) !important; color: var(--button-secondary-fg) !important; padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 700; transition: background 160ms ease, color 160ms ease; }
+.btn-secondary:hover { background: var(--button-bg) !important; color: var(--button-fg) !important; }
 @keyframes reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .reveal { animation: none; } }
