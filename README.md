@@ -12,45 +12,7 @@ When a production service breaks, the symptom is often obvious before the cause 
 
 The model can gather evidence and recommend an action. It cannot authorize itself to change production.
 
-```text
-incident
-   ↓
-Investigation Agent
-   ↓
-bounded read-only tools
-   ↓
-evidence + hypotheses
-   ↓
-root-cause diagnosis
-   ↓
-deterministic Policy Engine
-   ├── allow
-   ├── require human approval
-   └── deny
-   ↓
-simulated remediation
-   ↓
-recovery verification + postmortem
-```
-
-Sentinel includes:
-
-- OpenAI Responses API tool calling
-- adaptive model → tool → observation loops
-- model routing and token/cost telemetry
-- bounded tool schemas
-- an MCP SDK v2 server for the read-only investigation surface
-- deterministic authorization/risk policy
-- human approval for high-risk actions
-- prompt-injection handling for untrusted logs and tool output
-- evidence IDs and alternative hypotheses
-- reproducible incident simulation
-- FastAPI + Pydantic reference backend
-- PostgreSQL + pgvector schema
-- Redis and Docker Compose local platform
-- Terraform AWS reference infrastructure
-- evaluation and security tests
-- GitHub Actions CI
+Sentinel includes OpenAI Responses API tool calling, adaptive model → tool → observation loops, MCP, model routing, token/cost telemetry, deterministic authorization policy, human approval, prompt-injection handling, evidence IDs, reproducible incident simulation, FastAPI/Pydantic, PostgreSQL + pgvector, Redis, Docker Compose, Kubernetes/Terraform reference infrastructure, and automated evaluation/security tests.
 
 Public remediation modifies **simulated infrastructure only**. No real production credentials or arbitrary shell/SQL access are exposed.
 
@@ -60,22 +22,43 @@ See [`sentinel/`](./sentinel) for the backend, MCP server, persistence schema, s
 
 A knowledge assistant should not retrieve every document it can find. This project resolves a user identity first, removes inaccessible documents, runs semantic retrieval only over authorized knowledge, and then asks a language model to answer from that evidence.
 
-The live path uses:
+The live path uses `text-embedding-3-small`, GPT-5.6 Luna, server-side ACL filtering, vector similarity retrieval, citations, visible execution traces, and deterministic fallback behavior.
 
-- `text-embedding-3-small`
-- GPT-5.6 Luna for grounded answer generation
-- server-side ACL filtering
-- vector similarity retrieval
-- citations and visible execution traces
-- deterministic fallback behavior when a provider call fails
+### Voiceprint Studio — personalized content voice agent
 
-The deeper architecture maps the same boundary to FastAPI, PostgreSQL/pgvector, MCP connector patterns, Redis caching, containerized services, and production identity systems.
+A personalization workflow that learns recurring writing patterns from prior posts, retrieves the most relevant examples with embeddings, drafts fresh content in that style, checks for copied phrasing, scores style fidelity/brief adherence/platform fit/originality, and performs one targeted revision when the quality gate is missed.
+
+The public demo processes pasted examples ephemerally and does not persist them.
+
+### SignalBrief — multi-source research agent
+
+A goal-aware research workflow that uses OpenAI web search to look across public Reddit discussions, newsletter/blog analysis, public LinkedIn posts when indexable, and primary technical sources. It synthesizes the useful signals into a professional-goal-specific digest, returns source links, reports source-coverage gaps, and evaluates the result for relevance, synthesis, actionability, diversity, and citation coverage.
+
+It does not scrape authenticated LinkedIn pages. A production connector would use an approved API/export/integration.
 
 ### AI Policy Radar — live public-data product
 
 A focused Federal Register monitoring product for recent U.S. federal AI-related documents. It demonstrates external API integration, server rendering, caching, normalization, source provenance, and graceful upstream failure handling.
 
-The core workflow intentionally does **not** use an LLM. The product problem is trustworthy monitoring and primary-source access, so adding model inference would create unnecessary cost and uncertainty.
+The core workflow intentionally does **not** use an LLM. The product problem is trustworthy monitoring and primary-source access, so model inference would create unnecessary cost and uncertainty.
+
+## Evaluation framework
+
+The repository includes [`evals/`](./evals), a representative golden dataset, deterministic CI gates, and project-specific model/human evaluation plans.
+
+The methodology combines:
+
+- **Deterministic checks** for security, policy, schemas, citation/source requirements, approval behavior, and copy-risk constraints.
+- **LLM-as-judge** rubrics for semantic qualities such as groundedness, relevance, style fidelity, synthesis, and actionability.
+- **Human/product signals** for taste, blind preference, task completion, adoption, edit rate, and real-world usefulness.
+- **Scenario slices** so aggregate averages cannot hide failures in permission-negative, prompt-injection, source-gap, or high-risk-action cases.
+- **Release gates** so critical failures block shipping rather than being averaged away.
+
+Run the deterministic evaluation gates with:
+
+```bash
+npm run evals:offline
+```
 
 ## AI engineering surface
 
@@ -83,14 +66,14 @@ The selected projects collectively exercise the main application-layer concerns 
 
 - **Frontend:** React, TypeScript, Next.js, Tailwind CSS
 - **Backend:** Python, FastAPI, Pydantic, Next.js server routes, REST APIs
-- **Models:** OpenAI Responses API, tool calling, structured outputs, model routing, embeddings
-- **Agent systems:** bounded tools, MCP, human approval, explicit authority boundaries
+- **Models:** OpenAI Responses API, tool calling, structured outputs, model routing, embeddings, web search
+- **Agent systems:** bounded tools, MCP, human approval, explicit authority boundaries, revision loops
 - **Retrieval:** RAG, vector similarity, pgvector, metadata/ACL filtering, citations
 - **Data:** PostgreSQL, Redis, external APIs, normalized contracts
 - **Infrastructure:** Docker, Kubernetes reference manifests, Terraform, AWS patterns
-- **Quality:** eval harnesses, pytest, regression tests, GitHub Actions
+- **Quality:** golden datasets, deterministic evals, LLM-as-judge, pytest, regression tests, GitHub Actions
 - **Operations:** observability, traces, latency/cost telemetry, failure handling
-- **Security:** least privilege, ACL/RBAC patterns, prompt-injection defense, approval gates
+- **Security:** least privilege, ACL/RBAC patterns, prompt-injection defense, approval gates, privacy-conscious processing
 
 Project pages distinguish between technology running in the public Vercel deployment, code implemented in the repository, and production reference architecture.
 
@@ -144,6 +127,7 @@ docker compose -f sentinel/docker-compose.yml up --build
 GitHub Actions validates:
 
 - TypeScript type checking
+- deterministic portfolio evaluation gates
 - Next.js production build
 - Python runtime tests
 - Sentinel backend compilation and imports
@@ -155,7 +139,7 @@ GitHub Actions validates:
 
 Do not commit employer data, customer information, internal URLs/screenshots, credentials, tokens, `.env` files, or production infrastructure secrets.
 
-Synthetic data is used where a safe and reproducible environment is required. Live public data remains linked to its primary source.
+Synthetic data is used where a safe and reproducible environment is required. Live public data remains linked to its primary source. User-provided content in Voiceprint Studio is processed for the request and is not persisted by the demo.
 
 ## Contact
 
