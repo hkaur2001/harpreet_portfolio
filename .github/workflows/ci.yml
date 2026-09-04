@@ -16,6 +16,19 @@ jobs:
       - run: npm run typecheck
       - run: npm run evals:offline
       - run: npm run build
+      - name: Run production HTTP stress suite
+        run: |
+          npm run start -- -H 127.0.0.1 -p 3000 >/tmp/portfolio-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null || (cat /tmp/portfolio-next.log && exit 1)
+          npm run stress:http
 
   agent-runtime:
     runs-on: ubuntu-latest
