@@ -1,108 +1,137 @@
-# Harpreet Kaur — Software Engineering, Applied AI & Forward Deployed Systems
+# Harpreet Kaur — Software Engineering, Applied AI & Production Systems
 
-This repository is a public proof-of-work portfolio: production-style applications, system design, interactive AI workflows, evaluation, security boundaries, data integrations, and deployable code.
+This repository is my public engineering portfolio: a small set of working products that show how I approach ambiguous problems from product design through backend implementation, AI behavior, security, evaluation, reliability, and deployment.
 
 **Live portfolio:** https://harpreet-portfolio-tau.vercel.app
 
-## Flagship: Sentinel
+## Selected projects
 
-**Sentinel** is an AI production incident-response platform. A visitor can inject a simulated incident and watch the system investigate it across metrics, logs, deployments, database diagnostics, service health, source changes, runbooks, and prior incidents.
+### Sentinel — AI production incident response
 
-The interesting part is the control architecture:
+When a production service breaks, the symptom is often obvious before the cause is. Sentinel investigates a simulated incident across metrics, logs, deployments, database diagnostics, service health, source changes, runbooks, and prior incidents.
+
+The model can gather evidence and recommend an action. It cannot authorize itself to change production.
 
 ```text
 incident
    ↓
 Investigation Agent
    ↓
-read-only Tool Gateway ──→ logs / metrics / deploys / DB / runbooks / source changes
+bounded read-only tools
    ↓
-evidence-backed diagnosis
+evidence + hypotheses
+   ↓
+root-cause diagnosis
    ↓
 deterministic Policy Engine
-   ├── allowed → simulated execution
-   ├── approval → human decision → simulated execution
-   └── denied
+   ├── allow
+   ├── require human approval
+   └── deny
+   ↓
+simulated remediation
    ↓
 recovery verification + postmortem
 ```
 
-### Sentinel demonstrates
+Sentinel includes:
 
-- OpenAI Responses API function/tool calling
+- OpenAI Responses API tool calling
 - adaptive model → tool → observation loops
-- model routing and per-run token/cost telemetry
-- bounded tool schemas and connector contracts
-- MCP exposure of the same read-only tool surface
+- model routing and token/cost telemetry
+- bounded tool schemas
+- an MCP SDK v2 server for the read-only investigation surface
 - deterministic authorization/risk policy
-- human approval for production-impacting actions
-- prompt-injection labeling for untrusted logs/tool output
+- human approval for high-risk actions
+- prompt-injection handling for untrusted logs and tool output
 - evidence IDs and alternative hypotheses
-- reproducible failure injection
-- deterministic safety/evaluation suite
-- FastAPI + OpenAPI reference backend
-- PostgreSQL + pgvector persistence schema
-- Docker Compose local platform
-- Terraform AWS deployment reference
+- reproducible incident simulation
+- FastAPI + Pydantic reference backend
+- PostgreSQL + pgvector schema
+- Redis and Docker Compose local platform
+- Terraform AWS reference infrastructure
+- evaluation and security tests
 - GitHub Actions CI
 
-Public remediation changes **simulated infrastructure only**. The model never receives direct production credentials or arbitrary shell/SQL access.
+Public remediation modifies **simulated infrastructure only**. No real production credentials or arbitrary shell/SQL access are exposed.
 
-See [`sentinel/`](./sentinel) for the deeper backend, MCP, database, simulator, infrastructure, tests, and architecture decisions.
+See [`sentinel/`](./sentinel) for the backend, MCP server, persistence schema, simulator, infrastructure, tests, and design notes.
 
-## Other builds
+### Secure Knowledge Assistant — permission-aware RAG
 
-### AI Policy Radar
-A live-data product using the Federal Register API. It demonstrates server-side external API integration, caching, normalization, provenance, and upstream failure handling without forcing an LLM into a problem that does not need one.
+A knowledge assistant should not retrieve every document it can find. This project resolves a user identity first, removes inaccessible documents, runs semantic retrieval only over authorized knowledge, and then asks a language model to answer from that evidence.
 
-### Agent Systems Lab
-Focused server-executed workflows for permission-aware retrieval, technical discovery/architecture, and AI reliability behavior. They expose tools, evidence, decisions, and metrics rather than hiding behavior behind a chat interface.
+The live path uses:
 
-### ContextOps
-A permission-aware retrieval proof focused on authorization before generation, metadata filtering, source grounding, and run-level evaluation.
+- `text-embedding-3-small`
+- GPT-5.6 Luna for grounded answer generation
+- server-side ACL filtering
+- vector similarity retrieval
+- citations and visible execution traces
+- deterministic fallback behavior when a provider call fails
+
+The deeper architecture maps the same boundary to FastAPI, PostgreSQL/pgvector, MCP connector patterns, Redis caching, containerized services, and production identity systems.
+
+### AI Policy Radar — live public-data product
+
+A focused Federal Register monitoring product for recent U.S. federal AI-related documents. It demonstrates external API integration, server rendering, caching, normalization, source provenance, and graceful upstream failure handling.
+
+The core workflow intentionally does **not** use an LLM. The product problem is trustworthy monitoring and primary-source access, so adding model inference would create unnecessary cost and uncertainty.
+
+## AI engineering surface
+
+The selected projects collectively exercise the main application-layer concerns I want this portfolio to demonstrate:
+
+- **Frontend:** React, TypeScript, Next.js, Tailwind CSS
+- **Backend:** Python, FastAPI, Pydantic, Next.js server routes, REST APIs
+- **Models:** OpenAI Responses API, tool calling, structured outputs, model routing, embeddings
+- **Agent systems:** bounded tools, MCP, human approval, explicit authority boundaries
+- **Retrieval:** RAG, vector similarity, pgvector, metadata/ACL filtering, citations
+- **Data:** PostgreSQL, Redis, external APIs, normalized contracts
+- **Infrastructure:** Docker, Kubernetes reference manifests, Terraform, AWS patterns
+- **Quality:** eval harnesses, pytest, regression tests, GitHub Actions
+- **Operations:** observability, traces, latency/cost telemetry, failure handling
+- **Security:** least privilege, ACL/RBAC patterns, prompt-injection defense, approval gates
+
+Project pages distinguish between technology running in the public Vercel deployment, code implemented in the repository, and production reference architecture.
 
 ## Professional context
 
-I build enterprise AI and data systems at **S&P Global**. My production work has included patterns spanning 8+ enterprise integrations, more than 500K knowledge assets, and systems designed for an organization of 40K+ users.
+I build enterprise AI and data systems at **S&P Global**. My production work has included integration patterns spanning 8+ enterprise systems, more than 500K knowledge assets, and systems designed for an organization of 40K+ users.
 
 No proprietary employer data, credentials, internal URLs, or internal source code are used in these public projects.
 
-## Web stack
+## Run the web portfolio
 
-- Next.js 16.3
-- React 19.2
-- TypeScript
-- Tailwind CSS 4.3
-- OpenAI SDK (server-side only)
-- Vercel
+Requirements:
 
-Run locally:
+- Node.js 24+
+- npm
 
 ```bash
 npm install
 npm run dev
 ```
 
-Optional live Sentinel reasoning:
+The live AI paths use a server-side environment variable:
 
 ```bash
-export OPENAI_API_KEY="..."
+OPENAI_API_KEY=...
 ```
 
-Never expose the provider key through a `NEXT_PUBLIC_` environment variable.
+Never expose the provider key through a `NEXT_PUBLIC_` variable.
 
-## Sentinel reference backend
+## Run the Sentinel backend
 
 ```bash
 cd sentinel/backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-pytest -q
+python -m pytest -q
 uvicorn app.main:app --reload
 ```
 
-Open `http://localhost:8000/docs` for the API surface.
+Open `http://localhost:8000/docs` for the FastAPI/OpenAPI surface.
 
 To start the local Postgres/pgvector + Redis + API platform from the repository root:
 
@@ -112,26 +141,25 @@ docker compose -f sentinel/docker-compose.yml up --build
 
 ## CI
 
-GitHub Actions independently validates:
-- TypeScript typecheck
+GitHub Actions validates:
+
+- TypeScript type checking
 - Next.js production build
-- existing Python agent runtime tests
-- Sentinel Python backend safety/policy tests
+- Python runtime tests
+- Sentinel backend compilation and imports
+- MCP server import compatibility
+- Sentinel policy/security tests
+- local Docker Compose configuration
 
 ## Public-data and secret policy
 
-Do not commit:
-- S&P Global proprietary data or source code
-- customer information
-- internal URLs/screenshots
-- credentials, tokens, or `.env` files
-- production infrastructure secrets
+Do not commit employer data, customer information, internal URLs/screenshots, credentials, tokens, `.env` files, or production infrastructure secrets.
 
-Synthetic operational data is used where a safe, reproducible environment is needed. Live public data is source-linked where used.
+Synthetic data is used where a safe and reproducible environment is required. Live public data remains linked to its primary source.
 
 ## Contact
 
 **Harpreet Kaur** · New York, NY  
-Harpreetkaur622@gmail.com  
+harpreetkaur622@gmail.com  
 LinkedIn: https://www.linkedin.com/in/harpreet-kaur-0501/  
 GitHub: https://github.com/hkaur2001
