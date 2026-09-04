@@ -14,6 +14,7 @@ jobs:
           node-version: 24
       - run: npm install
       - run: npm run typecheck
+      - run: npm run evals:offline
       - run: npm run build
 
   agent-runtime:
