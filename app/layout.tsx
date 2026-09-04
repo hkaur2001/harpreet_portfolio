@@ -6,10 +6,14 @@ import { Footer } from "@/components/footer";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: { default: "Harpreet Kaur — Applied AI & Forward Deployed Engineering", template: "%s · Harpreet Kaur" },
-  description: "Production AI systems, enterprise RAG, agent architectures, evaluation, integrations, and measurable workflow impact.",
+  title: { default: "Harpreet Kaur — Software Engineering, Applied AI & Production Systems", template: "%s · Harpreet Kaur" },
+  description: "Full-stack software, applied AI, data integrations, production systems, and end-to-end engineering by Harpreet Kaur.",
   metadataBase: new URL(site.url),
-  openGraph: { title: "Harpreet Kaur — AI systems that survive contact with the enterprise", description: "Forward deployed / applied AI engineering across agents, RAG, enterprise integrations, evals, governance, and business value.", type: "website" },
+  openGraph: {
+    title: "Harpreet Kaur — Software Engineering, Applied AI & Production Systems",
+    description: "Full-stack products, working AI systems, live data projects, production integrations, evaluation, and reliability engineering.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
