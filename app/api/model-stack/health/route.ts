@@ -15,8 +15,10 @@ export async function GET() {
       remoteEmbeddingApiRequired: false,
     },
     hostedOpenModels: {
-      generation: HUGGING_FACE_MODELS.generation,
-      evaluation: HUGGING_FACE_MODELS.judge,
+      primaryGeneration: HUGGING_FACE_MODELS.generation,
+      generationChallenger: HUGGING_FACE_MODELS.challenger,
+      independentEvaluation: HUGGING_FACE_MODELS.judge,
+      routing: "Hugging Face Inference Providers with fastest-provider selection",
       activation: "Set HF_TOKEN in the server environment",
     },
   }, { headers: { "Cache-Control": "no-store" } });
