@@ -38,6 +38,13 @@ async function concurrent(label, count, fn) {
   return results;
 }
 
+function assertRetryObserved(label, results) {
+  if (!process.env.EXPECT_PROVIDER_RETRIES) return;
+  const observed = results.some((result) => Number(result.json?.metrics?.providerRetries ?? 0) > 0);
+  if (!observed) throw new Error(`${label} did not demonstrate recovery from an injected provider rate limit.`);
+  console.log(`✓ ${label}: injected 429 recovered via retry/backoff`);
+}
+
 async function main() {
   const pages = [
     "/",
@@ -61,7 +68,7 @@ async function main() {
   if (!health.json?.status) throw new Error("Sentinel health payload is incomplete.");
   console.log("✓ Sentinel health contract");
 
-  await concurrent("Secure Knowledge burst", 40, async (i) => {
+  const knowledgeResults = await concurrent("Secure Knowledge burst", 40, async (i) => {
     const persona = ["employee", "sales", "revenue"][i % 3];
     const result = await request("/api/knowledge/query", {
       method: "POST",
@@ -71,8 +78,9 @@ async function main() {
     if (!result.json?.answer || !Array.isArray(result.json?.trace)) throw new Error("Secure Knowledge response contract failed.");
     return result;
   });
+  assertRetryObserved("Secure Knowledge", knowledgeResults);
 
-  await concurrent("Voiceprint burst", 40, async (i) => {
+  const voiceResults = await concurrent("Voiceprint burst", 40, async (i) => {
     const result = await request("/api/voice-agent/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -81,8 +89,9 @@ async function main() {
     if (!result.json?.draft || !result.json?.styleProfile || !result.json?.evaluation) throw new Error("Voiceprint response contract failed.");
     return result;
   });
+  assertRetryObserved("Voiceprint", voiceResults);
 
-  await concurrent("SignalBrief burst", 20, async (i) => {
+  const researchResults = await concurrent("SignalBrief burst", 20, async (i) => {
     const result = await request("/api/research-agent/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -91,6 +100,7 @@ async function main() {
     if (!result.json?.digest || !result.json?.evaluation || !Array.isArray(result.json?.coverage)) throw new Error("SignalBrief response contract failed.");
     return result;
   });
+  assertRetryObserved("SignalBrief", researchResults);
 
   await concurrent("Sentinel all-scenario investigation", scenarios.length * 5, async (i) => {
     const scenarioId = scenarios[i % scenarios.length];
@@ -122,7 +132,7 @@ async function main() {
   await request("/api/sentinel/investigate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "missing", mode: "deterministic" }) }, [404]);
   console.log("✓ validation/error-path contracts");
 
-  console.log("\nStress suite passed: pages, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, and validation paths.");
+  console.log("\nStress suite passed: pages, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
 }
 
 main().catch((error) => {
