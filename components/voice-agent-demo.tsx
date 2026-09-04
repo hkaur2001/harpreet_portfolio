@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { retrieveWithLocalHuggingFace } from "@/lib/hf-local-embeddings";
 
 type VoiceResult = {
   draft: string;
@@ -28,6 +29,10 @@ type VoiceResult = {
 
 const starter = `I keep seeing teams reach for more AI before they have made the workflow observable. The model is rarely the only thing that needs debugging.\n---\nA good automation should make the boring path boring. The interesting engineering is in the exceptions: permissions, retries, ownership, and recovery.\n---\nThe best product demos answer one question quickly: what changed for the user after this existed? Architecture matters, but the outcome should still be obvious.`;
 
+function splitSamples(value: string) {
+  return value.split(/\n\s*---\s*\n/g).map((item) => item.trim()).filter(Boolean);
+}
+
 export function VoiceAgentDemo() {
   const [samples, setSamples] = useState(starter);
   const [brief, setBrief] = useState("Write a LinkedIn post about why evaluation should be designed before an AI feature launches.");
@@ -35,16 +40,38 @@ export function VoiceAgentDemo() {
   const [result, setResult] = useState<VoiceResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState("");
 
   async function run() {
     setLoading(true);
     setError("");
     setResult(null);
+    setStage("Preparing examples…");
+
     try {
+      const parsedSamples = splitSamples(samples);
+      let localRetrieval: { model: string; engine: string; ranked: Array<{ index: number; score: number }> } | null = null;
+      let localRetrievalError = "";
+
+      if (parsedSamples.length >= 3) {
+        try {
+          localRetrieval = await retrieveWithLocalHuggingFace(brief, parsedSamples, setStage);
+        } catch (embeddingError) {
+          localRetrievalError = embeddingError instanceof Error ? embeddingError.message : "Browser-local embeddings were unavailable.";
+        }
+      }
+
+      setStage("Generating and evaluating the draft…");
       const response = await fetch("/api/voice-agent/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ samples, brief, format }),
+        body: JSON.stringify({
+          samples,
+          brief,
+          format,
+          retrieval: localRetrieval,
+          localRetrievalError,
+        }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "The voice workflow failed.");
@@ -53,6 +80,7 @@ export function VoiceAgentDemo() {
       setError(err instanceof Error ? err.message : "The voice workflow failed.");
     } finally {
       setLoading(false);
+      setStage("");
     }
   }
 
@@ -74,7 +102,13 @@ export function VoiceAgentDemo() {
           <option>Short video script</option>
           <option>Email intro</option>
         </select>
-        <button onClick={run} disabled={loading} className="btn-primary mt-6 w-full rounded-full px-5 disabled:opacity-60">{loading ? "Learning the voice…" : "Draft in this voice →"}</button>
+
+        <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4 text-xs leading-5 text-[var(--muted)]">
+          <p className="font-semibold text-[var(--ink)]">Retrieval runs locally in your browser.</p>
+          <p className="mt-1">Hugging Face Transformers.js loads <code>Xenova/bge-small-en-v1.5</code> and computes semantic embeddings on-device. The first run downloads the compact model; later runs reuse the browser cache. This removes the remote embedding API rate limit that caused the earlier 429 errors.</p>
+        </div>
+
+        <button onClick={run} disabled={loading} className="btn-primary mt-6 w-full rounded-full px-5 disabled:opacity-60">{loading ? (stage || "Working…") : "Draft in this voice →"}</button>
         {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       </div>
 
@@ -83,7 +117,7 @@ export function VoiceAgentDemo() {
           <div className="grid min-h-[520px] place-items-center text-center"><div><p className="text-lg font-semibold">The output is inspectable, not just generated.</p><p className="mt-3 max-w-md text-sm leading-6 text-[var(--muted)]">After a run, this panel shows the learned style profile, which examples were retrieved, the draft, and an evaluation scorecard.</p></div></div>
         ) : (
           <div>
-            {result.metrics.degraded && <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">This run completed in degraded mode instead of failing.</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">{result.metrics.degradedReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>}
+            {result.metrics.degraded && <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-semibold">One optional model step used a fallback.</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">{result.metrics.degradedReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>}
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--signal)]">Generated draft</p>
             <div className="mt-4 whitespace-pre-wrap rounded-2xl bg-[var(--bg)] p-5 text-sm leading-7">{result.draft}</div>
 
