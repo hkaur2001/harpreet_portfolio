@@ -15,6 +15,7 @@ type ChatCompletionBody = {
 
 export const HUGGING_FACE_MODELS = {
   generation: "deepseek-ai/DeepSeek-V4-Flash-0731:fastest",
+  challenger: "Qwen/Qwen3.8-27B:fastest",
   judge: "zai-org/GLM-5.3:fastest",
 } as const;
 
@@ -24,13 +25,18 @@ export function huggingFaceConfigured() {
 
 export async function huggingFaceChat(
   input: string,
-  options: { purpose?: "generation" | "judge"; maxTokens?: number; temperature?: number } = {},
+  options: {
+    purpose?: "generation" | "challenger" | "judge";
+    maxTokens?: number;
+    temperature?: number;
+    model?: string;
+  } = {},
 ): Promise<HuggingFaceChatResult> {
   const token = process.env.HF_TOKEN;
   if (!token) throw new Error("Hugging Face inference is not configured.");
 
   const purpose = options.purpose ?? "generation";
-  const model = purpose === "judge" ? HUGGING_FACE_MODELS.judge : HUGGING_FACE_MODELS.generation;
+  const model = options.model ?? HUGGING_FACE_MODELS[purpose];
   const response = await fetchJsonWithRetry<ChatCompletionBody>("https://router.huggingface.co/v1/chat/completions", {
     method: "POST",
     headers: {
