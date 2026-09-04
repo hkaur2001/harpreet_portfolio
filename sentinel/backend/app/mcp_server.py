@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from .tools import ToolGateway
 
-mcp = FastMCP("Sentinel Operations Tools")
+mcp = MCPServer("Sentinel Operations Tools")
 gateway = ToolGateway()
 
 
