@@ -64,6 +64,12 @@ async function main() {
     return result;
   });
 
+  await concurrent("Policy Radar delivery burst", 40, async () => {
+    const result = await request("/projects/policy-radar");
+    if (!/AI Policy Radar/i.test(result.text) || !/Federal Register/i.test(result.text)) throw new Error("Policy Radar rendered without its expected project contract.");
+    return result;
+  });
+
   const health = await request("/api/sentinel/health");
   if (!health.json?.status) throw new Error("Sentinel health payload is incomplete.");
   console.log("✓ Sentinel health contract");
@@ -132,7 +138,7 @@ async function main() {
   await request("/api/sentinel/investigate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "missing", mode: "deterministic" }) }, [404]);
   console.log("✓ validation/error-path contracts");
 
-  console.log("\nStress suite passed: pages, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
+  console.log("\nStress suite passed: all selected pages, Policy Radar, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
 }
 
 main().catch((error) => {
