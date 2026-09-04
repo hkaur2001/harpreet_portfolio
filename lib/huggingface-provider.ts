@@ -23,20 +23,13 @@ export function huggingFaceConfigured() {
   return Boolean(process.env.HF_TOKEN);
 }
 
-export async function huggingFaceChat(
+async function invokeModel(
+  token: string,
+  model: string,
   input: string,
-  options: {
-    purpose?: "generation" | "challenger" | "judge";
-    maxTokens?: number;
-    temperature?: number;
-    model?: string;
-  } = {},
+  maxTokens: number,
+  temperature: number,
 ): Promise<HuggingFaceChatResult> {
-  const token = process.env.HF_TOKEN;
-  if (!token) throw new Error("Hugging Face inference is not configured.");
-
-  const purpose = options.purpose ?? "generation";
-  const model = options.model ?? HUGGING_FACE_MODELS[purpose];
   const response = await fetchJsonWithRetry<ChatCompletionBody>("https://router.huggingface.co/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -46,8 +39,8 @@ export async function huggingFaceChat(
     body: JSON.stringify({
       model,
       messages: [{ role: "user", content: input }],
-      max_tokens: options.maxTokens ?? 900,
-      temperature: options.temperature ?? (purpose === "judge" ? 0 : 0.35),
+      max_tokens: maxTokens,
+      temperature,
     }),
   }, { attempts: 3, baseDelayMs: 300, maxDelayMs: 1800, timeoutMs: 35_000 });
 
@@ -61,4 +54,32 @@ export async function huggingFaceChat(
     inputTokens: response.data.usage?.prompt_tokens ?? 0,
     outputTokens: response.data.usage?.completion_tokens ?? 0,
   };
+}
+
+export async function huggingFaceChat(
+  input: string,
+  options: {
+    purpose?: "generation" | "challenger" | "judge";
+    maxTokens?: number;
+    temperature?: number;
+    model?: string;
+  } = {},
+): Promise<HuggingFaceChatResult> {
+  const token = process.env.HF_TOKEN;
+  if (!token) throw new Error("Hugging Face inference is not configured.");
+
+  const purpose = options.purpose ?? "generation";
+  const maxTokens = options.maxTokens ?? 900;
+  const temperature = options.temperature ?? (purpose === "judge" ? 0 : 0.35);
+  const primaryModel = options.model ?? HUGGING_FACE_MODELS[purpose];
+
+  try {
+    return await invokeModel(token, primaryModel, input, maxTokens, temperature);
+  } catch (primaryError) {
+    // For creative/generative work, route across two independent popular open-model families before giving up.
+    if (!options.model && purpose === "generation" && primaryModel !== HUGGING_FACE_MODELS.challenger) {
+      return invokeModel(token, HUGGING_FACE_MODELS.challenger, input, maxTokens, temperature);
+    }
+    throw primaryError;
+  }
 }
