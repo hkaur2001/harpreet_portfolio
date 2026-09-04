@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
+import { huggingFaceChat, huggingFaceConfigured } from "@/lib/huggingface-provider";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type Source = { title: string; url: string; sourceType: string };
 type Judge = { relevance: number; synthesis: number; actionability: number; sourceDiversity: number; citationCoverage: number; notes: string };
@@ -17,7 +19,7 @@ function sourceType(url: string) {
   if (/reddit\.com/i.test(url)) return "Reddit";
   if (/linkedin\.com/i.test(url)) return "LinkedIn";
   if (/substack\.com|beehiiv\.com|buttondown\.email|convertkit\.com/i.test(url)) return "Newsletter";
-  if (/openai\.com|anthropic\.com|microsoft\.com|google\.com|github\.com|arxiv\.org/i.test(url)) return "Primary/technical";
+  if (/openai\.com|anthropic\.com|microsoft\.com|google\.com|github\.com|arxiv\.org|huggingface\.co/i.test(url)) return "Primary/technical";
   return "Web";
 }
 
@@ -67,7 +69,11 @@ function deterministicJudge(digest: string, sources: Source[]): Judge {
   };
 }
 
-async function judge(apiKey: string, goal: string, digest: string, sources: Source[]) {
+function judgePrompt(goal: string, digest: string, sources: Source[]) {
+  return `Evaluate a research digest for the user's professional goal. Return JSON only: {"relevance":1,"synthesis":1,"actionability":1,"sourceDiversity":1,"citationCoverage":1,"notes":""}. All scores are integers 1-5. Relevance: every major item helps the goal. Synthesis: it connects evidence instead of listing links. Actionability: it gives concrete next steps/talking points. Source diversity: multiple independent source types are represented, without rewarding low-quality sources. Citation coverage: factual claims are traceable to the supplied source set.\n\nGOAL:\n${goal}\n\nDIGEST:\n${digest}\n\nSOURCES:\n${sources.map((source) => `${source.sourceType}: ${source.title} — ${source.url}`).join("\n")}`;
+}
+
+async function openAiJudge(apiKey: string, prompt: string) {
   return fetchJsonWithRetry<ResponseBody>(openAiUrl("responses"), {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -76,15 +82,17 @@ async function judge(apiKey: string, goal: string, digest: string, sources: Sour
       reasoning: { effort: "low" },
       store: false,
       max_output_tokens: 350,
-      input: `Evaluate a research digest for the user's professional goal. Return JSON only: {"relevance":1,"synthesis":1,"actionability":1,"sourceDiversity":1,"citationCoverage":1,"notes":""}. All scores are integers 1-5. Relevance: every major item helps the goal. Synthesis: it connects evidence instead of listing links. Actionability: it gives concrete next steps/talking points. Source diversity: multiple independent source types are represented, without rewarding low-quality sources. Citation coverage: factual claims are traceable to the supplied source set.\n\nGOAL:\n${goal}\n\nDIGEST:\n${digest}\n\nSOURCES:\n${sources.map((source) => `${source.sourceType}: ${source.title} — ${source.url}`).join("\n")}`,
+      input: prompt,
     }),
   }, { attempts: 3, baseDelayMs: 250, maxDelayMs: 1400, timeoutMs: 20_000 });
 }
 
-function parseJudge(body: unknown): Judge {
-  const text = responseText(body);
+function parseJudgeText(text: string): Judge {
   try {
-    const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Partial<Judge>;
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("No JSON object found.");
+    const parsed = JSON.parse(text.slice(start, end + 1)) as Partial<Judge>;
     return { relevance: clamp(parsed.relevance), synthesis: clamp(parsed.synthesis), actionability: clamp(parsed.actionability), sourceDiversity: clamp(parsed.sourceDiversity), citationCoverage: clamp(parsed.citationCoverage), notes: typeof parsed.notes === "string" ? parsed.notes : "" };
   } catch {
     return { relevance: 3, synthesis: 3, actionability: 3, sourceDiversity: 3, citationCoverage: 3, notes: "Judge output could not be parsed." };
@@ -138,15 +146,29 @@ export async function POST(request: NextRequest) {
 
     let evaluation = deterministicJudge(digest, sources);
     let judgeMode = "deterministic fallback";
-    if (apiKey && model === "gpt-5.6-terra") {
-      try {
-        const judged = await judge(apiKey, goal, digest, sources);
-        providerRetries += judged.retries;
-        evaluation = parseJudge(judged.data);
-        judgeMode = "gpt-5.6-luna";
-      } catch {
-        degraded = true;
-        degradedReasons.push("The semantic evaluator was unavailable; observable source/structure checks were used instead.");
+    if (model === "gpt-5.6-terra") {
+      const prompt = judgePrompt(goal, digest, sources);
+      if (huggingFaceConfigured()) {
+        try {
+          const judged = await huggingFaceChat(prompt, { purpose: "judge", maxTokens: 420, temperature: 0 });
+          providerRetries += judged.retries;
+          evaluation = parseJudgeText(judged.text);
+          judgeMode = `${judged.model} · Hugging Face`;
+        } catch {
+          degradedReasons.push("The independent Hugging Face evaluator was unavailable; the workflow tried the primary provider judge instead.");
+        }
+      }
+
+      if (judgeMode === "deterministic fallback" && apiKey) {
+        try {
+          const judged = await openAiJudge(apiKey, prompt);
+          providerRetries += judged.retries;
+          evaluation = parseJudgeText(responseText(judged.data));
+          judgeMode = "gpt-5.6-luna · OpenAI";
+        } catch {
+          degraded = true;
+          degradedReasons.push("The semantic evaluator was unavailable; observable source/structure checks were used instead.");
+        }
       }
     }
 
