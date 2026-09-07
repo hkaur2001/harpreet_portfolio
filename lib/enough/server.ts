@@ -253,7 +253,7 @@ export async function createEnoughPlan(raw: unknown) {
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify({
         plan_id: plan.id,
-        participant_key_hash: hash(`host:${hostSecret}`),
+        participant_key_hash: hash(hostSecret),
         display_name: input.hostName,
         email: input.hostEmail,
         response: "yes",
@@ -262,7 +262,7 @@ export async function createEnoughPlan(raw: unknown) {
     });
   }
 
-  return { slug, hostSecret, view: await toView(plan) };
+  return { slug, hostSecret, hostParticipantToken: hostSecret, view: await toView(plan, hostSecret) };
 }
 
 export async function getEnoughPlan(slug: string, participantToken?: string | null) {
@@ -304,7 +304,9 @@ export async function cancelEnoughPlan(slug: string, hostSecret: string) {
 
 async function notifyUnlock(plan: PlanRow) {
   if (!enoughEmailConfigured()) return;
-  const responses = (await responsesForPlan(plan.id)).filter((item) => item.response === "yes" && item.email);
+  const responses = (await responsesForPlan(plan.id))
+    .filter((item) => item.response === "yes" && Boolean(item.email))
+    .map((item) => ({ ...item, email: item.email! }));
   if (!responses.length) return;
   const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` || "https://harpreet-portfolio-tau.vercel.app";
   const from = process.env.RESEND_FROM!;
