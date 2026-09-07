@@ -64,6 +64,7 @@ async function main() {
     "/projects/voice-agent",
     "/projects/research-agent",
     "/projects/policy-radar",
+    "/projects/vibecheck",
     "/projects/evaluations",
   ];
 
@@ -77,6 +78,14 @@ async function main() {
   await concurrent("Policy Radar delivery burst", 40, async () => {
     const result = await request("/projects/policy-radar");
     if (!/AI Policy Radar/i.test(result.text) || !/Federal Register/i.test(result.text)) throw new Error("Policy Radar rendered without its expected project contract.");
+    return result;
+  });
+
+  await concurrent("VibeCheck product case delivery burst", 30, async () => {
+    const result = await request("/projects/vibecheck");
+    if (!/VibeCheck/i.test(result.text) || !/Build the MVP with a 7-point budget/i.test(result.text) || !/North-star/i.test(result.text)) {
+      throw new Error("VibeCheck rendered without its expected PM case-study contract.");
+    }
     return result;
   });
 
@@ -167,7 +176,7 @@ async function main() {
   await request("/api/sentinel/investigate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "missing", mode: "deterministic" }) }, [404]);
   console.log("✓ validation/error-path contracts");
 
-  console.log("\nStress suite passed: all selected pages, Policy Radar, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
+  console.log("\nStress suite passed: all selected pages, VibeCheck, Policy Radar, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
 }
 
 main().catch((error) => {
