@@ -153,6 +153,27 @@ async function testSentinel() {
   console.log("✓ Sentinel health + investigation contract");
 }
 
+async function testAgentLabs() {
+  const fixtures = [
+    { slug: "context-ops", scenario: "What changed in the onboarding policy and who approves access now?" },
+    { slug: "solution-architect", scenario: "A 1,500-person support team wants an AI agent but has not measured ROI inputs yet." },
+    { slug: "incident-commander", scenario: "RAG answer quality dropped after a content sync; investigate before changing the prompt." },
+  ];
+
+  for (const fixture of fixtures) {
+    const result = await request("/api/labs/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fixture),
+    }, [200], 30_000);
+    assert(result.json?.headline?.length > 10, `${fixture.slug} returned no headline.`);
+    assert(result.json?.summary?.length > 20, `${fixture.slug} returned no summary.`);
+    assert(Array.isArray(result.json?.trace) && result.json.trace.length >= 3, `${fixture.slug} returned an incomplete tool trace.`);
+    assert(Array.isArray(result.json?.skills) && result.json.skills.length >= 3, `${fixture.slug} returned incomplete skill metadata.`);
+    console.log(`✓ server lab ${fixture.slug}: ${result.json.mode}`);
+  }
+}
+
 async function main() {
   console.log(`Production smoke target: ${base}`);
   await waitForDeployment();
@@ -161,7 +182,8 @@ async function main() {
   await testKnowledge();
   await testResearch();
   await testSentinel();
-  console.log("\n✓ Production validation passed: deployed revision, provider configuration, local HF retrieval contract, Voiceprint, Secure Knowledge, SignalBrief, Sentinel, and all public project pages.");
+  await testAgentLabs();
+  console.log("\n✓ Production validation passed: deployed revision, provider configuration, local HF retrieval contract, Voiceprint, Secure Knowledge, SignalBrief, Sentinel, all server agent labs, and all public project pages.");
 }
 
 main().catch((error) => {
