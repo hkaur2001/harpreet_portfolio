@@ -26,13 +26,13 @@ export default function ResearchAgentPage() {
             steps={[
               { title: "Define the goal", body: "The user explains what they are trying to achieve. The same news can be useful for one goal and noise for another." },
               { title: "Plan source coverage", body: "The research prompt explicitly seeks Reddit, newsletter/blog, public LinkedIn, and primary technical evidence rather than relying on one feed." },
-              { title: "Search the live web", body: "GPT-5.6 Terra uses OpenAI's web-search tool and returns traceable source URLs." },
+              { title: "Search the live web", body: "GPT-5.6 Luna uses OpenAI's web-search tool and returns traceable source URLs. The lower-cost model path keeps a public demo practical while still supporting tool use." },
               { title: "Filter and synthesize", body: "The model keeps only signals that matter to the goal, resolves obvious conflicts, and prefers original sources for factual claims." },
               { title: "Turn research into action", body: "Each signal includes why it matters and one concrete action or talking point." },
-              { title: "Evaluate the digest", body: "A separate judge scores relevance, synthesis, actionability, diversity, and citation coverage. Missing source categories are surfaced explicitly." },
+              { title: "Evaluate the digest", body: "The workflow first attempts an independent hosted open-model judge when quota is available, then falls back to a separate OpenAI evaluation call. Deterministic source-coverage checks remain independent of either model." },
             ]}
             toolGroups={[
-              { label: "Live in this project", items: ["GPT-5.6 Terra", "OpenAI web search", "Source citations", "Goal-aware prompting", "LLM-as-judge"] },
+              { label: "Live in this project", items: ["GPT-5.6 Luna", "OpenAI web search", "Source citations", "Goal-aware prompting", "LLM-as-judge"] },
               { label: "Research controls", items: ["Source coverage", "Primary-source preference", "Freshness instruction", "Contradiction handling", "No fabricated coverage"] },
               { label: "Production extension", items: ["Vercel Cron", "PostgreSQL", "Deduplication store", "Email/Slack delivery", "Feedback loop", "Online evals"] },
             ]}
