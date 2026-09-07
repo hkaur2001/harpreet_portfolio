@@ -6,6 +6,8 @@ export const runtime = "nodejs";
 export async function GET() {
   return NextResponse.json({
     status: "ok",
+    deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+    deploymentEnvironment: process.env.VERCEL_ENV ?? null,
     openAIConfigured: Boolean(process.env.OPENAI_API_KEY),
     huggingFaceConfigured: Boolean(process.env.HF_TOKEN),
     localEmbeddings: {
