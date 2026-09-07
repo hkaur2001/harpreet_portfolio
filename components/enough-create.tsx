@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -66,10 +67,19 @@ export function EnoughCreate() {
     setDeadlineAt(preset.deadline);
   }
 
-  async function submit(event: React.FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError("");
+
+    const start = new Date(startsAt);
+    const deadline = new Date(deadlineAt);
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(deadline.getTime()) || deadline.getTime() <= Date.now() || start.getTime() <= deadline.getTime()) {
+      setError("Choose a future RSVP deadline that comes before the plan starts.");
+      setBusy(false);
+      return;
+    }
+
     const payload = {
       title,
       emoji,
@@ -93,13 +103,16 @@ export function EnoughCreate() {
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "Could not create the plan.");
         localStorage.setItem(`enough:host:${body.slug}`, body.hostSecret);
+        localStorage.setItem(`enough:participant:${body.slug}`, body.hostParticipantToken || body.hostSecret);
+        localStorage.setItem("enough:displayName", hostName.trim());
+        if (hostEmail.trim()) localStorage.setItem("enough:email", hostEmail.trim());
         router.push(`/enough/p/${body.slug}`);
         return;
       }
 
       const slug = `demo-${randomToken().slice(0, 10)}`;
       const hostSecret = randomToken();
-      const hostKey = `host-${randomToken()}`;
+      const hostParticipantToken = hostSecret;
       const demo = {
         slug,
         title: title.trim(),
@@ -115,10 +128,13 @@ export function EnoughCreate() {
         hostName: hostName.trim(),
         hostPledged,
         createdAt: new Date().toISOString(),
-        responses: hostPledged ? [{ token: hostKey, name: hostName.trim(), email: hostEmail.trim(), response: "yes", isHost: true }] : [],
+        responses: hostPledged ? [{ token: hostParticipantToken, name: hostName.trim(), email: hostEmail.trim(), response: "yes", isHost: true }] : [],
       };
       localStorage.setItem(`enough:demo:${slug}`, JSON.stringify(demo));
       localStorage.setItem(`enough:host:${slug}`, hostSecret);
+      localStorage.setItem(`enough:participant:${slug}`, hostParticipantToken);
+      localStorage.setItem("enough:displayName", hostName.trim());
+      if (hostEmail.trim()) localStorage.setItem("enough:email", hostEmail.trim());
       router.push(`/enough/p/${slug}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create the plan.");
