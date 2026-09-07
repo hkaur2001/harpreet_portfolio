@@ -81,4 +81,6 @@ jobs:
         env:
           PRODUCTION_BASE_URL: https://harpreet-portfolio-tau.vercel.app
           EXPECTED_DEPLOYMENT_SHA: ${{ github.sha }}
-        run: node scripts/production-smoke.mjs
+        run: |
+          node scripts/production-smoke.mjs
+          node scripts/sentinel-production-smoke.mjs
