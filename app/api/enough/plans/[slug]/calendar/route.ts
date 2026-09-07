@@ -16,11 +16,11 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     const plan = await getEnoughPlan(slug);
     if (plan.status !== "confirmed") return new Response("This plan is not confirmed yet.", { status: 409 });
     const start = new Date(plan.startsAt);
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const end = new Date(start.getTime() + plan.durationMinutes * 60_000);
     const body = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Enough//Plans that unlock//EN",
+      "PRODID:-//Enough//Compatible Quorum Plans//EN",
       "CALSCALE:GREGORIAN",
       "BEGIN:VEVENT",
       `UID:${plan.slug}@enough`,
@@ -28,7 +28,7 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
       `DTSTART:${icsDate(start.toISOString())}`,
       `DTEND:${icsDate(end.toISOString())}`,
       `SUMMARY:${escapeIcs(`${plan.emoji} ${plan.title}`)}`,
-      `DESCRIPTION:${escapeIcs(plan.description || "Confirmed through Enough.")}`,
+      `DESCRIPTION:${escapeIcs(plan.description || "Confirmed through Enough after a compatible quorum formed.")}`,
       plan.location ? `LOCATION:${escapeIcs(plan.location)}` : "",
       "END:VEVENT",
       "END:VCALENDAR",
