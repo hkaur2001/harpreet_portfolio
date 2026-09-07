@@ -56,6 +56,7 @@ async function testPages() {
     "/projects/voice-agent",
     "/projects/research-agent",
     "/projects/policy-radar",
+    "/projects/vibecheck",
     "/projects/evaluations",
   ];
   await Promise.all(pages.map(async (path) => {
