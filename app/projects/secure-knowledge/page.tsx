@@ -12,31 +12,31 @@ export default function SecureKnowledgePage() {
     <main>
       <section className="grid-field border-b border-[var(--line)]">
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Selected project · secure RAG · live embeddings</p>
+          <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Selected project · secure RAG · authorization-first retrieval</p>
           <h1 className="mt-5 max-w-5xl text-balance text-5xl font-semibold tracking-[-0.05em] md:text-7xl">Secure Knowledge Assistant</h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">A knowledge assistant should not answer from every document it can find. This project makes identity and permissions part of retrieval itself, then uses embeddings and a language model only on evidence the current user is allowed to see.</p>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">A knowledge assistant should not answer from every document it can find. This project makes identity and permissions part of retrieval itself, ranks only evidence the current user is allowed to see, and gives the language model that authorized context—never the restricted corpus.</p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Problem</p><p className="mt-3 text-sm leading-6">People need fast answers from internal knowledge, but search cannot leak restricted content across teams.</p></div>
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Product</p><p className="mt-3 text-sm leading-6">A permission-aware RAG workflow where changing the user identity changes which sources can even enter retrieval.</p></div>
-            <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">What it demonstrates</p><p className="mt-3 text-sm leading-6">Embeddings, retrieval, authorization, grounded generation, citations, fallback behavior, and production architecture.</p></div>
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">What it demonstrates</p><p className="mt-3 text-sm leading-6">Authorization, hybrid retrieval, grounded generation, citations, abstention, observable traces, and production vector-search architecture.</p></div>
           </div>
 
           <ProjectHowItWorks
             steps={[
               { title: "Resolve identity", body: "The server maps the selected persona to trusted groups. Visitors cannot submit arbitrary access groups." },
-              { title: "Filter before retrieval", body: "Documents outside that security context are removed before semantic search runs." },
-              { title: "Embed and rank", body: "OpenAI text-embedding-3-small converts the question and authorized documents into vectors and ranks them by cosine similarity." },
-              { title: "Generate from authorized context", body: "GPT-5.6 Luna receives only the retrieved allowed sources and is instructed to abstain when evidence is insufficient." },
-              { title: "Return citations and trace", body: "The UI shows sources, retrieval mode, blocked-source count, model choice, and request latency." },
-              { title: "Scale the same boundary", body: "The production reference swaps the tiny in-memory corpus for Postgres/pgvector, connectors, caching, and audited identity metadata." },
+              { title: "Filter before retrieval", body: "Documents outside that security context are removed first. Restricted text never enters ranking or model context for an unauthorized identity." },
+              { title: "Rank authorized evidence", body: "The public fixture uses deterministic hybrid retrieval with weighted terms, phrase matches, normalization, and query expansion. This keeps the security demo repeatable and independent of an embedding API quota." },
+              { title: "Generate from authorized context", body: "GPT-5.6 Luna receives only the top allowed sources and is instructed to abstain when evidence is insufficient." },
+              { title: "Return citations and trace", body: "The UI shows sources, retrieval mode, blocked-source count, model choice, and request latency so the security boundary is inspectable." },
+              { title: "Scale the same boundary", body: "The production reference swaps the tiny fixture for connector ingestion, embedding-based hybrid search, Postgres/pgvector, caching, and audited identity metadata—while preserving the same pre-retrieval ACL boundary." },
             ]}
             toolGroups={[
-              { label: "Live in this demo", items: ["Next.js", "TypeScript", "OpenAI Embeddings", "GPT-5.6 Luna", "ACL pre-filter", "Citations"] },
-              { label: "Implemented in repo", items: ["FastAPI", "Pydantic", "PostgreSQL", "pgvector", "MCP", "Pytest", "GitHub Actions"] },
-              { label: "Production reference", items: ["Redis", "OAuth/OIDC", "Docker", "Kubernetes", "Terraform", "OpenTelemetry"] },
+              { label: "Live in this demo", items: ["Next.js", "TypeScript", "Hybrid retrieval", "GPT-5.6 Luna", "ACL pre-filter", "Citations"] },
+              { label: "Implemented / reference architecture", items: ["FastAPI", "Pydantic", "PostgreSQL", "pgvector", "MCP", "Pytest", "GitHub Actions"] },
+              { label: "Production extension", items: ["Embeddings", "Redis", "OAuth/OIDC", "Docker", "Kubernetes", "Terraform", "OpenTelemetry"] },
             ]}
-            note="The public corpus is synthetic so anyone can test permission behavior safely. The access-control rule is the important part: restricted documents never enter model context for an unauthorized identity."
+            note="The public corpus is intentionally tiny and synthetic, so a deterministic retrieval layer makes the authorization behavior easy to reproduce without relying on a paid embedding request. At enterprise scale, the same ACL-before-retrieval boundary can front vector or hybrid search."
           />
         </div>
       </section>
