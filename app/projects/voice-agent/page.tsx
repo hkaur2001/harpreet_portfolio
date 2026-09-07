@@ -33,7 +33,7 @@ export default function VoiceAgentPage() {
             ]}
             toolGroups={[
               { label: "Live in this project", items: ["Hugging Face Transformers.js", "Xenova/bge-small-en-v1.5", "OpenAI Responses API", "RAG", "Cosine similarity", "LLM-as-judge"] },
-              { label: "Multi-model provider layer", items: ["OpenAI GPT-5.6 Luna", "DeepSeek V4 Flash via Hugging Face", "GLM-5.3 via Hugging Face", "Retry/backoff", "Provider fallback"] },
+              { label: "Multi-model provider layer", items: ["OpenAI GPT-5.6 Luna", "DeepSeek V4 Flash via Hugging Face", "Qwen3.8-27B via Hugging Face", "Retry/backoff", "Provider fallback"] },
               { label: "Engineering controls", items: ["Deterministic copy check", "Browser-local ML", "No persistence", "Input validation", "Timeouts", "Structured scorecard"] },
               { label: "Production extension", items: ["pgvector", "Creator profiles", "Versioned prompts", "Feedback loop", "A/B tests", "Observability"] },
             ]}
