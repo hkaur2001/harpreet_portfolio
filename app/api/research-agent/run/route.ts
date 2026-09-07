@@ -40,11 +40,11 @@ async function research(apiKey: string, goal: string, topics: string) {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-5.6-terra",
-      reasoning: { effort: "medium" },
+      model: "gpt-5.6-luna",
+      reasoning: { effort: "low" },
       store: false,
       max_output_tokens: 1500,
-      tools: [{ type: "web_search" }],
+      tools: [{ type: "web_search", search_context_size: "medium" }],
       include: ["web_search_call.action.sources"],
       input: `Act as a research agent for one professional goal. Search the public web, prioritizing material from the last 7 days when possible. Deliberately look for multiple source types: Reddit discussions, newsletter/blog analysis, public LinkedIn posts when indexable, and primary technical sources. If a source type is inaccessible or has no useful result, say so rather than inventing coverage. Resolve contradictions and prefer original/primary sources for factual claims.\n\nProfessional goal:\n${goal}\n\nTopics:\n${topics}\n\nCreate a concise weekly-style brief with these sections: 1) Three signals worth knowing, 2) Why each matters specifically for the goal, 3) One practical action or interview talking point per signal, 4) Source coverage note. Cite web-derived claims with the citations produced by the web-search tool. Do not include generic AI news that is not useful for the stated goal.`,
     }),
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
         if (liveDigest) {
           digest = liveDigest;
           sources = extractSources(result.data);
-          model = "gpt-5.6-terra";
+          model = "gpt-5.6-luna";
           searchTool = "OpenAI web search";
         } else {
           degraded = true;
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     let evaluation = deterministicJudge(digest, sources);
     let judgeMode = "deterministic fallback";
-    if (model === "gpt-5.6-terra") {
+    if (model === "gpt-5.6-luna") {
       const prompt = judgePrompt(goal, digest, sources);
       if (huggingFaceConfigured()) {
         try {
