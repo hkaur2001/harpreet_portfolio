@@ -67,3 +67,18 @@ jobs:
       - run: python -m pytest -q
       - name: Validate local platform configuration
         run: docker compose -f ../docker-compose.yml config >/dev/null
+
+  production-smoke:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [web, agent-runtime, sentinel-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate deployed portfolio and live model providers
+        env:
+          PRODUCTION_BASE_URL: https://harpreet-portfolio-tau.vercel.app
+          EXPECTED_DEPLOYMENT_SHA: ${{ github.sha }}
+        run: node scripts/production-smoke.mjs
