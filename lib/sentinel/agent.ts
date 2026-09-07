@@ -71,8 +71,10 @@ const MODEL_PRICING_PER_MILLION: Record<string, { input: number; output: number 
 };
 
 function chooseModel(scenario: IncidentScenario) {
-  const complex = scenario.severity === "SEV-1" || scenario.category === "unknown_failure" || scenario.logs.some((log) => /ignore all previous|delete production/i.test(log.message));
-  return complex ? "gpt-5.6-terra" : "gpt-5.6-luna";
+  // The public demo prioritizes responsiveness. The adversarial/ambiguous scenario
+  // still exercises the larger reasoning path; routine and SEV-1 correlation cases
+  // use Luna so an interactive click does not sit behind several long model turns.
+  return scenario.category === "unknown_failure" ? "gpt-5.6-terra" : "gpt-5.6-luna";
 }
 
 function estimateCost(model: string, inputTokens: number, outputTokens: number) {
@@ -183,12 +185,23 @@ export async function investigateDeterministically(scenario: IncidentScenario): 
   };
 }
 
+async function liveFallback(scenario: IncidentScenario, reason: string): Promise<InvestigationResult> {
+  const fallback = await investigateDeterministically(scenario);
+  return {
+    ...fallback,
+    liveRequested: true,
+    fallbackReason: reason,
+  };
+}
+
 export async function investigateWithOpenAI(scenario: IncidentScenario): Promise<InvestigationResult> {
-  if (!process.env.OPENAI_API_KEY) return investigateDeterministically(scenario);
+  if (!process.env.OPENAI_API_KEY) {
+    return liveFallback(scenario, "Live OpenAI is not configured for this deployment, so Sentinel completed the same scenario with its deterministic safety replay.");
+  }
 
   const started = performance.now();
   const model = chooseModel(scenario);
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 18_000, maxRetries: 1 });
   const input: any[] = [
     {
       role: "user",
@@ -204,17 +217,17 @@ export async function investigateWithOpenAI(scenario: IncidentScenario): Promise
   let diagnosis: Diagnosis | undefined;
 
   try {
-    for (let step = 0; step < 8; step += 1) {
+    for (let step = 0; step < 5; step += 1) {
       const response: any = await client.responses.create({
         model,
         instructions: SYSTEM_INSTRUCTIONS,
         input,
         tools: openAiTools(),
         tool_choice: "auto",
-        parallel_tool_calls: false,
-        reasoning: { effort: "medium" },
+        parallel_tool_calls: true,
+        reasoning: { effort: model === "gpt-5.6-terra" ? "medium" : "low" },
         text: { format: { type: "json_schema", name: "sentinel_diagnosis", strict: true, schema: DIAGNOSIS_SCHEMA } },
-        max_output_tokens: 2200,
+        max_output_tokens: 1400,
         store: false,
       } as any);
 
@@ -253,10 +266,13 @@ export async function investigateWithOpenAI(scenario: IncidentScenario): Promise
       }
     }
   } catch {
-    return investigateDeterministically(scenario);
+    return liveFallback(scenario, "The live model did not complete inside Sentinel's bounded execution window, so the request safely finished with the deterministic replay instead of spinning indefinitely.");
   }
 
-  if (!diagnosis) return investigateDeterministically(scenario);
+  if (!diagnosis) {
+    return liveFallback(scenario, "The live model reached the investigation step limit without producing a final diagnosis, so Sentinel safely completed with the deterministic replay.");
+  }
+
   const uniqueEvidence = dedupeEvidence(evidence);
   const validEvidenceIds = new Set(uniqueEvidence.map((item) => item.id));
   diagnosis.evidenceIds = diagnosis.evidenceIds.filter((id) => validEvidenceIds.has(id));
@@ -275,6 +291,7 @@ export async function investigateWithOpenAI(scenario: IncidentScenario): Promise
     state: diagnosis.escalation.required ? "ESCALATED" : "DIAGNOSED",
     mode: "live",
     model,
+    liveRequested: true,
     diagnosis,
     policy,
     evidence: uniqueEvidence,
