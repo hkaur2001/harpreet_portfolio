@@ -21,7 +21,7 @@ async function probeModel(model: string, purpose: "generation" | "challenger" | 
       {
         purpose,
         model,
-        maxTokens: 24,
+        maxTokens: 96,
         temperature: 0,
       },
     );
