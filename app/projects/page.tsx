@@ -3,7 +3,7 @@ import { ProjectHowItWorks } from "@/components/project-how-it-works";
 
 export const metadata = {
   title: "Selected Projects",
-  description: "Selected projects by Harpreet Kaur across agent systems, RAG, personalization, research, and live data products.",
+  description: "Selected projects by Harpreet Kaur across agent systems, RAG, personalization, research, live data products, and product strategy.",
 };
 
 const projects = [
@@ -57,6 +57,16 @@ const projects = [
     steps: [["Fetch", "Query the live Federal Register API."], ["Normalize", "Shape dates, agencies, document types, and source URLs into a stable contract."], ["Cache", "Keep the page fresh without wasteful repeated calls."], ["Preserve provenance", "Link every item back to the original government record."]],
     groups: [["Application", ["Next.js", "TypeScript", "Server Components", "REST API"]], ["Data", ["Normalization", "Caching", "Source provenance", "Error handling"]], ["Judgment", ["No unnecessary LLM", "Simple architecture", "Graceful degradation"]]],
   },
+  {
+    number: "06",
+    title: "VibeCheck",
+    subtitle: "Product Strategy Playground",
+    purpose: "Get a group from “I’m down for anything” to a real plan without one person becoming the unpaid coordinator.",
+    body: "VibeCheck is a product-sense case study for a lightweight group-planning product. It shows the full PM loop: frame the job, separate assumptions from evidence, prioritize an MVP under capacity constraints, define a north-star metric and guardrails, and design the experiment before claiming success.",
+    href: "/projects/vibecheck",
+    steps: [["Frame the job", "Define the user outcome before brainstorming features."], ["Map assumptions", "Treat the causes of planning friction as hypotheses to validate."], ["Prioritize under constraint", "Use RICE plus a fixed build budget to force tradeoffs."], ["Measure and learn", "Define the north star, guardrails, launch criteria, and next discovery questions."]],
+    groups: [["Product", ["JTBD", "Problem framing", "PRD thinking", "MVP scoping", "Roadmapping"]], ["Decision making", ["RICE prioritization", "Capacity tradeoffs", "Non-goals", "Success criteria"]], ["Growth + learning", ["North-star metrics", "A/B testing", "Funnel metrics", "Qualitative research", "Guardrails"]]],
+  },
 ] as const;
 
 export default function ProjectsPage() {
@@ -66,7 +76,7 @@ export default function ProjectsPage() {
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Selected projects</p>
           <h1 className="mt-5 max-w-5xl text-balance text-5xl font-semibold tracking-[-0.05em] md:text-7xl">Different problems need different systems.</h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Each project starts with a plain-language problem. Expand “How does it work?” only when you want the architecture and tool depth.</p>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Each project starts with a plain-language problem. Expand “How does it work?” only when you want the architecture, product decisions, and tool depth.</p>
           <div className="mt-8 flex flex-wrap gap-3"><Link href="/projects/evaluations" className="btn-secondary">How I evaluate these systems →</Link><Link href="/" className="btn-secondary">Back to portfolio</Link></div>
         </div>
       </section>
