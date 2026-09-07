@@ -110,6 +110,9 @@ export type InvestigationResult = {
   state: "DIAGNOSED" | "NEEDS_INFO" | "ESCALATED";
   mode: InvestigationMode;
   model: string;
+  liveRequested?: boolean;
+  rateLimited?: boolean;
+  fallbackReason?: string;
   diagnosis: Diagnosis;
   policy: PolicyDecision;
   evidence: Evidence[];
