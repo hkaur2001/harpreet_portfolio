@@ -21,7 +21,7 @@ type ChatCompletionBody = {
 export const HUGGING_FACE_MODELS = {
   generation: "deepseek-ai/DeepSeek-V4-Flash-0731:fastest",
   challenger: "Qwen/Qwen3.8-27B:fastest",
-  judge: "zai-org/GLM-5.3:fastest",
+  judge: "Qwen/Qwen3.8-27B:ovhcloud",
 } as const;
 
 export function huggingFaceConfigured() {
