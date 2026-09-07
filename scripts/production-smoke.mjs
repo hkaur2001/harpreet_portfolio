@@ -56,14 +56,70 @@ async function testPages() {
     "/projects/voice-agent",
     "/projects/research-agent",
     "/projects/policy-radar",
-    "/projects/vibecheck",
+    "/projects/enough",
+    "/enough",
     "/projects/evaluations",
   ];
   await Promise.all(pages.map(async (path) => {
     const result = await request(path, {}, [200], 25_000);
     assert(result.text.length > 300, `${path} returned an unexpectedly small page.`);
   }));
-  console.log(`✓ ${pages.length} public project pages rendered`);
+  console.log(`✓ ${pages.length} public product/project pages rendered`);
+}
+
+async function testEnough() {
+  const health = await request("/api/enough/health", {}, [200], 20_000);
+  assert(health.json?.status === "ok", "Enough health check failed.");
+  assert(String(health.json?.privacyModel || "").includes("blind quorum"), "Enough privacy contract is missing.");
+  console.log(`✓ Enough product health; deploymentMode=${health.json.deploymentMode}; persistence=${Boolean(health.json.persistentStoreConfigured)}; email=${Boolean(health.json.emailNotificationsConfigured)}`);
+
+  if (!health.json?.persistentStoreConfigured) {
+    console.log("  ↳ Enough is currently serving its single-browser demo fallback; multi-device lifecycle smoke will activate after Supabase is connected.");
+    return;
+  }
+
+  const now = Date.now();
+  const create = await request("/api/enough/plans", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: "Production smoke — quorum test",
+      emoji: "🧪",
+      description: "Ephemeral CI plan used to validate privacy and threshold behavior.",
+      location: "Test location",
+      startsAt: new Date(now + 6 * 60 * 60 * 1000).toISOString(),
+      deadlineAt: new Date(now + 4 * 60 * 60 * 1000).toISOString(),
+      threshold: 3,
+      hostName: "CI Host",
+      hostPledged: true,
+    }),
+  }, [201], 30_000);
+  const slug = create.json?.slug;
+  assert(slug && create.json?.hostSecret, "Enough create response is incomplete.");
+  assert(create.json?.view?.yesCount === 1, "Enough host pledge was not counted exactly once.");
+  assert(create.json?.view?.guestList === null, "Enough leaked the guest list before quorum.");
+
+  const aToken = `ci-a-${crypto.randomUUID()}`;
+  const friendA = await request(`/api/enough/plans/${slug}/rsvp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "CI Friend A", response: "yes", participantToken: aToken }),
+  }, [200], 30_000);
+  assert(friendA.json?.view?.yesCount === 2 && friendA.json?.view?.guestList === null && friendA.json?.view?.status === "open", "Enough revealed identities or confirmed before quorum.");
+
+  const bToken = `ci-b-${crypto.randomUUID()}`;
+  const friendB = await request(`/api/enough/plans/${slug}/rsvp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "CI Friend B", response: "yes", participantToken: bToken }),
+  }, [200], 30_000);
+  assert(friendB.json?.justConfirmed === true, "Enough did not report the quorum transition.");
+  assert(friendB.json?.view?.status === "confirmed", "Enough did not confirm at quorum.");
+  assert(Array.isArray(friendB.json?.view?.guestList) && friendB.json.view.guestList.length === 3, "Enough did not reveal the confirmed guest list.");
+
+  const calendar = await request(`/api/enough/plans/${slug}/calendar`, {}, [200], 20_000);
+  assert(calendar.text.includes("BEGIN:VCALENDAR") && calendar.text.includes("Production smoke"), "Enough calendar export failed.");
+  console.log("✓ Enough create → blind RSVP → atomic quorum → reveal → calendar production lifecycle");
 }
 
 async function testVoiceprint() {
@@ -105,30 +161,21 @@ async function testKnowledge() {
   const result = await request("/api/knowledge/query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      question: "What controls are required for production access and role-specific systems?",
-      persona: "sales",
-    }),
+    body: JSON.stringify({ question: "What controls are required for production access and role-specific systems?", persona: "sales" }),
   }, [200], 60_000);
-
   assert(result.json?.answer?.length > 30, "Secure Knowledge returned no usable answer.");
   assert(Array.isArray(result.json?.trace) && result.json.trace.length >= 4, "Secure Knowledge trace is incomplete.");
   assert(Array.isArray(result.json?.sources) && result.json.sources.length >= 1, "Secure Knowledge returned no evidence sources.");
   assert(result.json?.metrics?.model !== "not called", "Secure Knowledge never reached answer generation.");
   console.log(`✓ Secure Knowledge model=${result.json.metrics.model}; retrieval=${result.json.metrics.retrievalMode}; degraded=${Boolean(result.json.metrics.degraded)}`);
-  if (result.json?.metrics?.degraded) console.log(`  ↳ graceful fallback: ${(result.json.metrics.degradedReasons || []).join(" | ")}`);
 }
 
 async function testResearch() {
   const result = await request("/api/research-agent/run", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      goal: "Prepare for a senior Applied AI or Forward Deployed Engineer interview with production-agent depth.",
-      topics: "agent evaluation, MCP, RAG reliability, model routing",
-    }),
+    body: JSON.stringify({ goal: "Prepare for a senior Applied AI or Forward Deployed Engineer interview with production-agent depth.", topics: "agent evaluation, MCP, RAG reliability, model routing" }),
   }, [200], 120_000);
-
   assert(result.json?.digest?.length > 200, "SignalBrief returned no usable digest.");
   assert(result.json?.evaluation, "SignalBrief returned no evaluation.");
   assert(Array.isArray(result.json?.coverage), "SignalBrief coverage metadata is missing.");
@@ -138,7 +185,6 @@ async function testResearch() {
 async function testSentinel() {
   const health = await request("/api/sentinel/health", {}, [200], 20_000);
   assert(health.json?.status === "ok", "Sentinel health check failed.");
-
   const investigation = await request("/api/sentinel/investigate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -156,13 +202,8 @@ async function testAgentLabs() {
     { slug: "solution-architect", scenario: "A 1,500-person support team wants an AI agent but has not measured ROI inputs yet." },
     { slug: "incident-commander", scenario: "RAG answer quality dropped after a content sync; investigate before changing the prompt." },
   ];
-
   for (const fixture of fixtures) {
-    const result = await request("/api/labs/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fixture),
-    }, [200], 30_000);
+    const result = await request("/api/labs/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fixture) }, [200], 30_000);
     assert(result.json?.headline?.length > 10, `${fixture.slug} returned no headline.`);
     assert(result.json?.summary?.length > 20, `${fixture.slug} returned no summary.`);
     assert(Array.isArray(result.json?.trace) && result.json.trace.length >= 3, `${fixture.slug} returned an incomplete tool trace.`);
@@ -175,12 +216,13 @@ async function main() {
   console.log(`Production smoke target: ${base}`);
   await waitForDeployment();
   await testPages();
+  await testEnough();
   await testVoiceprint();
   await testKnowledge();
   await testResearch();
   await testSentinel();
   await testAgentLabs();
-  console.log("\n✓ Production validation passed: deployed revision, provider configuration, graceful fallbacks, Sentinel, server agent labs, and all public project pages.");
+  console.log("\n✓ Production validation passed: deployed revision, Enough, provider configuration, graceful fallbacks, Sentinel, server agent labs, and all public project pages.");
 }
 
 main().catch((error) => {
