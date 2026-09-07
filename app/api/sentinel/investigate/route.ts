@@ -18,9 +18,18 @@ export async function POST(request: NextRequest) {
   if (!scenario) return NextResponse.json({ error: "Unknown Sentinel scenario." }, { status: 404 });
 
   const requestedLive = payload.mode !== "deterministic";
-  if (!requestedLive || !process.env.OPENAI_API_KEY) {
+  if (!requestedLive) {
     const result = await investigateDeterministically(scenario);
     return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    const result = await investigateDeterministically(scenario);
+    return NextResponse.json({
+      ...result,
+      liveRequested: true,
+      fallbackReason: "Live OpenAI is not configured for this deployment, so Sentinel completed the deterministic replay instead.",
+    }, { headers: { "Cache-Control": "no-store" } });
   }
 
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
@@ -28,7 +37,12 @@ export async function POST(request: NextRequest) {
   const rate = allowLiveInvestigation(clientKey);
   if (!rate.allowed) {
     const result = await investigateDeterministically(scenario);
-    return NextResponse.json({ ...result, rateLimited: true }, { headers: { "Cache-Control": "no-store", "X-Sentinel-Live-Remaining": "0" } });
+    return NextResponse.json({
+      ...result,
+      liveRequested: true,
+      rateLimited: true,
+      fallbackReason: "The public live-investigation limit was reached for this visitor. Sentinel completed the deterministic replay so the demo still returns a full result.",
+    }, { headers: { "Cache-Control": "no-store", "X-Sentinel-Live-Remaining": "0" } });
   }
 
   const result = await investigateWithOpenAI(scenario);
