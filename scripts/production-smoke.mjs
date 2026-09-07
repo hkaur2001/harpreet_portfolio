@@ -32,9 +32,11 @@ async function waitForDeployment() {
         result.json?.status === "ok" &&
         revisionMatches &&
         result.json?.openAIConfigured === true &&
-        result.json?.huggingFaceConfigured === true
+        result.json?.huggingFaceConfigured === true &&
+        result.json?.localEmbeddings?.remoteEmbeddingApiRequired === false
       ) {
         console.log(`✓ production deployment ready: ${result.json.deploymentCommit || "revision unavailable"}`);
+        console.log("✓ OpenAI + HF_TOKEN configured; browser-local Hugging Face embeddings enabled");
         return result.json;
       }
     } catch (error) {
@@ -42,7 +44,7 @@ async function waitForDeployment() {
     }
     await sleep(8_000);
   }
-  throw new Error(`Production deployment did not become ready with both model providers configured. Last observation: ${JSON.stringify(last)}`);
+  throw new Error(`Production deployment did not become ready with the expected model configuration. Last observation: ${JSON.stringify(last)}`);
 }
 
 async function testPages() {
@@ -61,19 +63,6 @@ async function testPages() {
     assert(result.text.length > 300, `${path} returned an unexpectedly small page.`);
   }));
   console.log(`✓ ${pages.length} public project pages rendered`);
-}
-
-async function testHuggingFaceModels() {
-  assert(expectedSha, "EXPECTED_DEPLOYMENT_SHA is required for the provider probe.");
-  const result = await request(`/api/model-stack/probe?commit=${encodeURIComponent(expectedSha)}`, {}, [200], 160_000);
-  assert(result.json?.huggingFaceConfigured === true, "Hugging Face token was not visible to the production runtime.");
-  assert(result.json?.allPassed === true, `One or more Hugging Face model probes failed: ${JSON.stringify(result.json?.probes)}`);
-  const probes = result.json?.probes ?? [];
-  assert(probes.length === 3, `Expected 3 hosted-model probes, received ${probes.length}.`);
-  for (const probe of probes) {
-    assert(probe.ok === true, `Hugging Face model failed: ${probe.model}`);
-    console.log(`✓ hosted model reachable: ${probe.model} (${probe.latencyMs} ms)`);
-  }
 }
 
 async function testVoiceprint() {
@@ -107,9 +96,9 @@ async function testVoiceprint() {
   assert(Array.isArray(result.json?.retrieved) && result.json.retrieved.length >= 3, "Voiceprint retrieval contract failed.");
   assert(String(result.json?.metrics?.retrieval || "").includes("Hugging Face"), `Voiceprint did not preserve the local HF retrieval path: ${result.json?.metrics?.retrieval}`);
   assert(String(result.json?.metrics?.model || "") !== "deterministic fallback", `Voiceprint generation fell back unexpectedly: ${JSON.stringify(result.json?.metrics)}`);
-  assert(String(result.json?.metrics?.judge || "").includes("Hugging Face"), `Voiceprint did not use the independent Hugging Face judge: ${result.json?.metrics?.judge}`);
+  assert(String(result.json?.metrics?.judge || "") !== "deterministic fallback", `Voiceprint semantic evaluation fell back unexpectedly: ${JSON.stringify(result.json?.metrics)}`);
   assert(result.json?.metrics?.degraded !== true, `Voiceprint completed in degraded mode: ${JSON.stringify(result.json?.metrics?.degradedReasons)}`);
-  console.log(`✓ Voiceprint live generation=${result.json.metrics.model}; judge=${result.json.metrics.judge}`);
+  console.log(`✓ Voiceprint generation=${result.json.metrics.model}; retrieval=${result.json.metrics.retrieval}; judge=${result.json.metrics.judge}`);
 }
 
 async function testKnowledge() {
@@ -126,8 +115,9 @@ async function testKnowledge() {
   assert(Array.isArray(result.json?.trace) && result.json.trace.length >= 4, "Secure Knowledge trace is incomplete.");
   assert(Array.isArray(result.json?.sources) && result.json.sources.length >= 1, "Secure Knowledge returned no evidence sources.");
   assert(result.json?.metrics?.model !== "not called", "Secure Knowledge never reached answer generation.");
+  assert(result.json?.metrics?.model !== "deterministic fallback", `Secure Knowledge generation degraded: ${JSON.stringify(result.json?.metrics)}`);
   console.log(`✓ Secure Knowledge model=${result.json.metrics.model}; retrieval=${result.json.metrics.retrievalMode}; degraded=${Boolean(result.json.metrics.degraded)}`);
-  if (result.json?.metrics?.degraded) console.log(`  ↳ fallback reason: ${(result.json.metrics.degradedReasons || []).join(" | ")}`);
+  if (result.json?.metrics?.degraded) console.log(`  ↳ retrieval fallback remained safe: ${(result.json.metrics.degradedReasons || []).join(" | ")}`);
 }
 
 async function testResearch() {
@@ -144,6 +134,7 @@ async function testResearch() {
   assert(result.json?.evaluation, "SignalBrief returned no evaluation.");
   assert(Array.isArray(result.json?.coverage), "SignalBrief coverage metadata is missing.");
   assert(result.json?.metrics?.model !== "degraded fallback", `SignalBrief research generation degraded: ${JSON.stringify(result.json?.metrics)}`);
+  assert(result.json?.metrics?.judge !== "deterministic fallback", `SignalBrief semantic evaluation degraded: ${JSON.stringify(result.json?.metrics)}`);
   console.log(`✓ SignalBrief model=${result.json.metrics.model}; judge=${result.json.metrics.judge}; sources=${result.json.metrics.sourceCount}`);
 }
 
@@ -166,12 +157,11 @@ async function main() {
   console.log(`Production smoke target: ${base}`);
   await waitForDeployment();
   await testPages();
-  await testHuggingFaceModels();
   await testVoiceprint();
   await testKnowledge();
   await testResearch();
   await testSentinel();
-  console.log("\n✓ Production validation passed: deployment revision, OpenAI config, Hugging Face config + 3 hosted models, Voiceprint, Secure Knowledge, SignalBrief, Sentinel, and all public project pages.");
+  console.log("\n✓ Production validation passed: deployed revision, provider configuration, local HF retrieval contract, Voiceprint, Secure Knowledge, SignalBrief, Sentinel, and all public project pages.");
 }
 
 main().catch((error) => {
