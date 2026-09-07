@@ -5,6 +5,11 @@ import { experienceHighlights, impact, principles, site } from "@/lib/site";
 
 const toolkit = [
   {
+    area: "Product management + strategy",
+    tools: ["Problem framing", "Jobs to be Done", "PRD thinking", "User research plans", "RICE prioritization", "North-star metrics", "Experiment design", "Roadmapping"],
+    proof: "VibeCheck: user job → assumptions → MVP scope → prioritization → metrics → experiment plan",
+  },
+  {
     area: "Product + application",
     tools: ["React", "TypeScript", "Next.js", "Python", "FastAPI", "Pydantic", "REST APIs"],
     proof: "Portfolio UI, server routes, Sentinel backend, secure knowledge workflow",
@@ -45,11 +50,12 @@ export default function Home() {
             <div className="mb-8 flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5">New York, NY</span>
               <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5">Software engineering</span>
+              <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5">Product strategy</span>
               <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5">Applied AI</span>
               <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5">Production systems</span>
             </div>
             <h1 className="max-w-5xl text-balance text-5xl font-semibold tracking-[-0.055em] sm:text-6xl md:text-7xl lg:text-[84px] lg:leading-[0.98]">I turn hard, ambiguous problems into software people can actually use.</h1>
-            <p className="mt-8 max-w-3xl text-balance text-lg leading-8 text-[var(--muted)] md:text-xl">I work across product interfaces, backend services, AI systems, data integrations, security, reliability, and deployment. The projects below are designed to show the system working—not just describe a stack.</p>
+            <p className="mt-8 max-w-3xl text-balance text-lg leading-8 text-[var(--muted)] md:text-xl">I work across product strategy, product interfaces, backend services, AI systems, data integrations, security, reliability, and deployment. The projects below are designed to show the decisions and the system working—not just describe a stack.</p>
             <div className="mt-9 flex flex-wrap gap-3"><Link href="#projects" className="btn-primary rounded-full px-5">Explore selected projects →</Link><Link href="#experience" className="btn-secondary">Production experience</Link></div>
           </div>
           <div className="mt-20 grid gap-px overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--line)] md:grid-cols-4">{impact.map((item) => <div key={item.label} className="bg-[var(--surface)] p-6 md:p-7"><p className="text-3xl font-semibold tracking-[-0.04em]">{item.value}</p><p className="mt-2 text-sm font-medium">{item.label}</p><p className="mt-4 text-xs leading-5 text-[var(--muted)]">{item.detail}</p></div>)}</div>
@@ -58,7 +64,7 @@ export default function Home() {
 
       <section id="projects" className="border-b border-[var(--line)]">
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-          <SectionHeading eyebrow="Selected projects" title="Each project solves a different kind of problem." body="The portfolio is intentionally small. Sentinel demonstrates agentic production systems, Secure Knowledge Assistant demonstrates retrieval and authorization, and Policy Radar demonstrates a reliable data product where an LLM is not the answer." />
+          <SectionHeading eyebrow="Selected projects" title="Each project solves a different kind of problem." body="Sentinel demonstrates agentic production systems, Secure Knowledge Assistant demonstrates retrieval and authorization, Policy Radar demonstrates a reliable data product where an LLM is not the answer, and VibeCheck shows how I frame product strategy before the build starts." />
 
           <div className="mt-12 space-y-6">
             <article className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-7 md:p-10">
@@ -148,13 +154,42 @@ export default function Home() {
                 </div>
               </div>
             </article>
+
+            <article className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-7 md:p-10">
+              <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">04 · Product management · VibeCheck</p>
+                  <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em]">Get five friends to agree on tonight’s plan before the group chat reaches message #73.</h2>
+                  <p className="mt-5 text-sm leading-7 text-[var(--muted)]">VibeCheck is a playful product-sense case study about group planning. The exercise starts before the code: define the job, map assumptions, force MVP tradeoffs, choose a north-star metric and guardrails, then design the experiment that would tell us whether the idea deserves a larger roadmap.</p>
+                  <div className="mt-7 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-[var(--bg)] p-4"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">North-star candidate</p><p className="mt-2 text-sm">Plans confirmed within 10 minutes of the first invite.</p></div><div className="rounded-2xl bg-[var(--bg)] p-4"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Try it</p><p className="mt-2 text-sm">Build the MVP yourself with a fixed seven-point capacity budget.</p></div></div>
+                  <Link href="/projects/vibecheck" className="btn-primary mt-8 rounded-full px-5">Play product manager →</Link>
+                </div>
+                <div>
+                  <ProjectHowItWorks
+                    steps={[
+                      { title: "Frame the job", body: "Start from the outcome a group needs, not a list of features." },
+                      { title: "Separate assumptions from evidence", body: "Decision fatigue, social pressure, and hidden constraints are hypotheses to validate." },
+                      { title: "Prioritize under a hard budget", body: "RICE gives a comparison; capacity forces an actual choice." },
+                      { title: "Define success before launch", body: "Choose the north star, guardrails, and rollout threshold before seeing results." },
+                      { title: "Keep v1 narrow", body: "Explicit non-goals stop chat, social mechanics, and novelty features from swallowing the core job." },
+                    ]}
+                    toolGroups={[
+                      { label: "Product", items: ["Jobs to be Done", "Problem framing", "PRD thinking", "MVP scoping", "Roadmapping"] },
+                      { label: "Prioritization", items: ["RICE", "Capacity tradeoffs", "Non-goals", "Decision logs"] },
+                      { label: "Learning", items: ["North-star metrics", "Funnel metrics", "A/B testing", "Guardrails", "User research plan"] },
+                    ]}
+                    note="The project is explicit about what is hypothesized versus validated; it does not fabricate user interviews or experiment results."
+                  />
+                </div>
+              </div>
+            </article>
           </div>
         </div>
       </section>
 
       <section className="border-b border-[var(--line)]">
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-          <SectionHeading eyebrow="AI engineering toolkit" title="The tools are tied to concrete system responsibilities." body="A technology name matters less than knowing why it is there. This map shows where each part of the modern AI application stack appears across the selected projects and repository." />
+          <SectionHeading eyebrow="Skills + capabilities" title="The tools are tied to concrete responsibilities and decisions." body="A technology or framework name matters less than knowing why it is there. This map covers the product, AI, application, data, production, quality, and security work represented across the portfolio." />
           <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{toolkit.map((group) => <article key={group.area} className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6"><h3 className="text-lg font-semibold">{group.area}</h3><div className="mt-4 flex flex-wrap gap-2">{group.tools.map((tool) => <span key={tool} className="rounded-full bg-[var(--soft)] px-2.5 py-1 text-[11px]">{tool}</span>)}</div><p className="mt-5 border-t border-[var(--line)] pt-4 text-xs leading-5 text-[var(--muted)]"><strong className="text-[var(--ink)]">Where it shows up:</strong> {group.proof}</p></article>)}</div>
           <p className="mt-5 text-xs leading-5 text-[var(--muted)]">Some infrastructure components are reference implementations rather than services running in the public Vercel deployment. Project pages label that distinction explicitly.</p>
         </div>
@@ -167,9 +202,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="thinking" className="border-b border-[var(--line)]"><div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28"><SectionHeading eyebrow="How I think" title="Engineering principles that travel across products, AI, and infrastructure." /><div className="mt-12 divide-y divide-[var(--line)] border-y border-[var(--line)]">{principles.map(([title, body], i) => <div key={title} className="grid gap-4 py-7 md:grid-cols-[80px_0.7fr_1.3fr] md:items-start"><span className="font-mono text-xs text-[var(--muted)]">0{i + 1}</span><h3 className="font-semibold">{title}</h3><p className="max-w-2xl text-sm leading-7 text-[var(--muted)]">{body}</p></div>)}</div></div></section>
+      <section id="thinking" className="border-b border-[var(--line)]"><div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28"><SectionHeading eyebrow="How I think" title="Principles that travel across products, AI, and infrastructure." /><div className="mt-12 divide-y divide-[var(--line)] border-y border-[var(--line)]">{principles.map(([title, body], i) => <div key={title} className="grid gap-4 py-7 md:grid-cols-[80px_0.7fr_1.3fr] md:items-start"><span className="font-mono text-xs text-[var(--muted)]">0{i + 1}</span><h3 className="font-semibold">{title}</h3><p className="max-w-2xl text-sm leading-7 text-[var(--muted)]">{body}</p></div>)}</div></div></section>
 
-      <section><div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28"><div className="rounded-[2rem] bg-[var(--ink)] px-7 py-12 text-white md:px-12 md:py-16"><p className="font-mono text-xs uppercase tracking-[0.16em] text-white/60">Contact</p><h2 className="mt-5 max-w-4xl text-balance text-4xl font-semibold tracking-[-0.045em] md:text-6xl">I like problems that cross product, systems, data, and AI.</h2><p className="mt-6 max-w-2xl text-base leading-7 text-white/70">I’m interested in work where I can understand the user, shape the architecture, build across the stack, measure what happens in production, and improve the system after launch.</p><div className="mt-8 flex flex-wrap gap-3"><a href={`mailto:${site.email}`} className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:opacity-85">Email me</a><a href={site.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-black">LinkedIn ↗</a></div></div></div></section>
+      <section><div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28"><div className="rounded-[2rem] bg-[var(--ink)] px-7 py-12 text-white md:px-12 md:py-16"><p className="font-mono text-xs uppercase tracking-[0.16em] text-white/60">Contact</p><h2 className="mt-5 max-w-4xl text-balance text-4xl font-semibold tracking-[-0.045em] md:text-6xl">I like problems that cross product, systems, data, and AI.</h2><p className="mt-6 max-w-2xl text-base leading-7 text-white/70">I’m interested in work where I can understand the user, shape the product and architecture, build across the stack, measure what happens in production, and improve the system after launch.</p><div className="mt-8 flex flex-wrap gap-3"><a href={`mailto:${site.email}`} className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:opacity-85">Email me</a><a href={site.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-black">LinkedIn ↗</a></div></div></div></section>
     </main>
   );
 }
