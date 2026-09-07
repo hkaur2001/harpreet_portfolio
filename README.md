@@ -20,9 +20,9 @@ See [`sentinel/`](./sentinel) for the backend, MCP server, persistence schema, s
 
 ### Secure Knowledge Assistant — permission-aware RAG
 
-A knowledge assistant should not retrieve every document it can find. This project resolves a user identity first, removes inaccessible documents, runs semantic retrieval only over authorized knowledge, and then asks a language model to answer from that evidence.
+A knowledge assistant should not retrieve every document it can find. This project resolves a user identity first, removes inaccessible documents before ranking, retrieves only from authorized knowledge, and then asks a language model to answer from that evidence.
 
-The live path uses server-side ACL filtering, semantic retrieval, grounded generation, citations, visible execution traces, and deterministic fallback behavior. The repository also includes PostgreSQL/pgvector production reference patterns.
+The tiny public corpus uses quota-independent hybrid retrieval so the authorization boundary is deterministic and easy to inspect. The production reference keeps the same ACL-before-retrieval contract while scaling to embedding-based hybrid search with PostgreSQL/pgvector. The live response exposes citations, blocked-source counts, retrieval mode, model choice, and execution trace.
 
 ### Voiceprint Studio — personalized content voice agent
 
@@ -31,8 +31,8 @@ A personalization workflow that learns recurring writing patterns from prior pos
 Voiceprint deliberately uses more than one AI execution pattern:
 
 - **Browser-local embeddings:** Hugging Face Transformers.js runs `Xenova/bge-small-en-v1.5` on-device, removing the remote embedding API from the request path.
-- **Hosted generation:** OpenAI is the primary generator; the repository includes Hugging Face Inference Provider fallback routing for open models.
-- **Independent evaluation:** when `HF_TOKEN` is configured, a Hugging Face-hosted model can grade an OpenAI-generated draft, reducing same-model-family evaluator bias.
+- **Hosted generation:** OpenAI is the primary generator; the repository includes optional Hugging Face Inference Provider fallback routing for DeepSeek and Qwen open models.
+- **Independent evaluation:** when hosted open-model quota is available, a Hugging Face-hosted model can grade an OpenAI-generated draft; otherwise a separate OpenAI evaluation pass preserves the semantic quality gate.
 - **Deterministic safety:** code checks exact phrase overlap regardless of what an LLM judge says.
 
 The public demo processes pasted examples ephemerally and does not persist them.
@@ -41,7 +41,7 @@ The public demo processes pasted examples ephemerally and does not persist them.
 
 A goal-aware research workflow that uses live web search to look across public Reddit discussions, newsletter/blog analysis, public LinkedIn posts when indexable, and primary technical sources. It synthesizes useful signals into a professional-goal-specific digest, returns source links, reports source-coverage gaps, and evaluates the result for relevance, synthesis, actionability, diversity, and citation coverage.
 
-When Hugging Face hosted inference is configured, SignalBrief uses an independent open-model judge before falling back to its primary model provider. It does not scrape authenticated LinkedIn pages; a production connector would use an approved API/export/integration.
+SignalBrief uses GPT-5.6 Luna with web search for the live research path. It can use an independent hosted open-model judge when Hugging Face inference quota is available and otherwise falls back to a separate OpenAI evaluation call without fabricating source coverage. It does not scrape authenticated LinkedIn pages; a production connector would use an approved API/export/integration.
 
 ### AI Policy Radar — live public-data product
 
@@ -57,7 +57,7 @@ The methodology combines:
 
 - **Deterministic checks** for security, policy, schemas, citation/source requirements, approval behavior, and copy-risk constraints.
 - **LLM-as-judge** rubrics for semantic qualities such as groundedness, relevance, style fidelity, synthesis, and actionability.
-- **Cross-model evaluation** where a different model/provider can grade generation output.
+- **Cross-model evaluation** where a different model/provider can grade generation output when the provider is available.
 - **Human/product signals** for taste, blind preference, task completion, adoption, edit rate, and real-world usefulness.
 - **Scenario slices** so aggregate averages cannot hide failures in permission-negative, prompt-injection, source-gap, or high-risk-action cases.
 - **Release gates** so critical failures block shipping rather than being averaged away.
@@ -74,10 +74,10 @@ The selected projects collectively exercise the main application-layer concerns 
 
 - **Frontend:** React, TypeScript, Next.js, Tailwind CSS
 - **Backend:** Python, FastAPI, Pydantic, Next.js server routes, REST APIs
-- **Models:** OpenAI Responses API, Hugging Face Inference Providers, open-model routing, structured outputs, embeddings, web search
+- **Models:** OpenAI Responses API, Hugging Face Inference Providers, open-model routing, structured outputs, local embeddings, web search
 - **Local ML:** Hugging Face Transformers.js, ONNX Runtime, browser model caching
 - **Agent systems:** bounded tools, MCP, human approval, explicit authority boundaries, revision loops
-- **Retrieval:** RAG, cosine similarity, pgvector, metadata/ACL filtering, citations
+- **Retrieval:** RAG, hybrid retrieval, cosine similarity, pgvector, metadata/ACL filtering, citations
 - **Data:** PostgreSQL, Redis, external APIs, normalized contracts
 - **Infrastructure:** Docker, Kubernetes reference manifests, Terraform, AWS patterns
 - **Quality:** golden datasets, deterministic evals, LLM-as-judge, cross-model judges, pytest, regression tests, GitHub Actions
@@ -94,15 +94,15 @@ The application works with an OpenAI server-side key:
 OPENAI_API_KEY=...
 ```
 
-Voiceprint's semantic retrieval does **not** require that key because embeddings execute locally in the browser.
+Voiceprint's semantic retrieval does **not** require an embedding API key because embeddings execute locally in the browser.
 
-An optional Hugging Face fine-grained token with Inference Providers permission enables the hosted open-model route:
+An optional Hugging Face fine-grained token with Inference Providers permission enables hosted open-model routes when the Hugging Face account/provider has inference quota available:
 
 ```bash
 HF_TOKEN=...
 ```
 
-`HF_TOKEN` is server-only. Never expose provider secrets through `NEXT_PUBLIC_*` environment variables or client bundles.
+Hosted Hugging Face inference is deliberately not a hard dependency. Provider credits and model availability can change independently of the application, so public workflows preserve a validated OpenAI or deterministic fallback path. `HF_TOKEN` is server-only; never expose provider secrets through `NEXT_PUBLIC_*` environment variables or client bundles.
 
 Safe provider configuration can be inspected through:
 
@@ -143,21 +143,27 @@ To start the local Postgres/pgvector + Redis + API platform from the repository 
 docker compose -f sentinel/docker-compose.yml up --build
 ```
 
-## CI and stress testing
+## CI and production validation
 
 GitHub Actions validates:
 
 - TypeScript type checking
 - deterministic portfolio evaluation gates
 - Next.js production build
-- production HTTP stress/failure-injection suite
+- local HTTP stress/failure-injection suite
 - provider `429` retry paths
-- Voiceprint browser-local retrieval contract and lexical fallback
+- Voiceprint browser-local retrieval contract and fallback behavior
 - Python runtime tests
 - Sentinel backend compilation and imports
 - MCP server import compatibility
 - Sentinel policy/security tests
 - local Docker Compose configuration
+- the exact deployed Vercel revision on `main`
+- all public project pages
+- live Voiceprint, Secure Knowledge, SignalBrief, and Sentinel contracts
+- the three server-executed supporting agent labs
+
+The production smoke test waits for Vercel to deploy the exact Git commit before exercising the live application, so a green release check represents the deployed portfolio rather than only a local build.
 
 ## Public-data and secret policy
 
