@@ -64,7 +64,8 @@ async function main() {
     "/projects/voice-agent",
     "/projects/research-agent",
     "/projects/policy-radar",
-    "/projects/vibecheck",
+    "/projects/enough",
+    "/enough",
     "/projects/evaluations",
   ];
 
@@ -75,17 +76,20 @@ async function main() {
     return result;
   });
 
+  const enoughHealth = await request("/api/enough/health");
+  if (enoughHealth.json?.status !== "ok" || !String(enoughHealth.json?.privacyModel || "").includes("blind quorum")) throw new Error("Enough health/privacy contract failed.");
+  if (!enoughHealth.json?.persistentStoreConfigured) {
+    const future = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const deadline = new Date(Date.now() + 20 * 60 * 60 * 1000);
+    await request("/api/enough/plans", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: "Stress test plan", hostName: "Test", startsAt: future.toISOString(), deadlineAt: deadline.toISOString(), threshold: 3 }) }, [503]);
+    console.log("✓ Enough gracefully reports unconfigured persistence in local CI");
+  } else {
+    console.log("✓ Enough collaborative persistence configured");
+  }
+
   await concurrent("Policy Radar delivery burst", 40, async () => {
     const result = await request("/projects/policy-radar");
     if (!/AI Policy Radar/i.test(result.text) || !/Federal Register/i.test(result.text)) throw new Error("Policy Radar rendered without its expected project contract.");
-    return result;
-  });
-
-  await concurrent("VibeCheck product case delivery burst", 30, async () => {
-    const result = await request("/projects/vibecheck");
-    if (!/VibeCheck/i.test(result.text) || !/Build the MVP with a 7-point budget/i.test(result.text) || !/North-star/i.test(result.text)) {
-      throw new Error("VibeCheck rendered without its expected PM case-study contract.");
-    }
     return result;
   });
 
@@ -176,7 +180,7 @@ async function main() {
   await request("/api/sentinel/investigate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "missing", mode: "deterministic" }) }, [404]);
   console.log("✓ validation/error-path contracts");
 
-  console.log("\nStress suite passed: all selected pages, VibeCheck, Policy Radar, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
+  console.log("\nStress suite passed: Enough, all selected pages, Policy Radar, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
 }
 
 main().catch((error) => {
