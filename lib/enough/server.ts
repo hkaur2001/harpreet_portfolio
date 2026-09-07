@@ -321,7 +321,7 @@ async function notifyUnlock(plan: PlanRow) {
       subject: `${plan.emoji} ${plan.title} is on`,
       text: `${plan.title} reached its threshold and is officially on.\n\n${when}${plan.location ? `\n${plan.location}` : ""}\n\nSee the unlocked guest list and details: ${base}/enough/p/${plan.slug}`,
     }),
-  }))));
+  })));
 }
 
 export function enoughHealth() {
