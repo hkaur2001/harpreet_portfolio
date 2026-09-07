@@ -3,7 +3,7 @@ import { ProjectHowItWorks } from "@/components/project-how-it-works";
 
 export const metadata = {
   title: "Selected Projects",
-  description: "Selected projects by Harpreet Kaur across agent systems, RAG, personalization, research, live data products, and product strategy.",
+  description: "Selected projects by Harpreet Kaur across agent systems, RAG, personalization, research, live data products, and end-to-end product management.",
 };
 
 const projects = [
@@ -22,30 +22,30 @@ const projects = [
     title: "Secure Knowledge Assistant",
     subtitle: "Permission-aware RAG",
     purpose: "Answer from internal knowledge without leaking information the current user cannot access.",
-    body: "Identity is resolved before retrieval, inaccessible documents are removed, semantic search runs over the allowed corpus, and the language model receives only authorized evidence.",
+    body: "Identity is resolved before retrieval, inaccessible documents are removed, hybrid retrieval runs only over the allowed corpus, and the language model receives only authorized evidence.",
     href: "/projects/secure-knowledge",
-    steps: [["Resolve identity", "Map the user to trusted groups."], ["Filter first", "Remove inaccessible documents before retrieval."], ["Retrieve semantically", "Use embeddings and vector similarity to rank allowed evidence."], ["Generate with citations", "Answer only from authorized context and expose the sources used."]],
-    groups: [["AI", ["RAG", "OpenAI Embeddings", "GPT-5.6 Luna", "Citations", "Evals"]], ["Data", ["PostgreSQL", "pgvector", "Metadata", "ACL filtering"]], ["Security", ["RBAC/ACLs", "OAuth/OIDC patterns", "Least privilege", "Auditability"]]],
+    steps: [["Resolve identity", "Map the user to trusted groups."], ["Filter first", "Remove inaccessible documents before retrieval."], ["Retrieve", "Rank only the authorized evidence set."], ["Generate with citations", "Answer only from allowed context and expose the sources used."]],
+    groups: [["AI", ["RAG", "Hybrid retrieval", "GPT-5.6 Luna", "Citations", "Evals"]], ["Data", ["PostgreSQL", "pgvector reference", "Metadata", "ACL filtering"]], ["Security", ["RBAC/ACLs", "OAuth/OIDC patterns", "Least privilege", "Auditability"]]],
   },
   {
     number: "03",
     title: "Voiceprint Studio",
     subtitle: "Personalized Content Voice Agent",
     purpose: "Draft new content that matches a creator or brand's recurring style without copying their old posts.",
-    body: "The workflow learns a reusable style profile, retrieves the most relevant prior examples with embeddings, generates a fresh draft, evaluates style fidelity and originality, and revises once when quality falls below the gate.",
+    body: "The workflow learns a reusable style profile, retrieves the most relevant prior examples with browser-local Hugging Face embeddings, generates a fresh draft, evaluates style fidelity and originality, and revises once when quality falls below the gate.",
     href: "/projects/voice-agent",
-    steps: [["Learn the voice", "Extract recurring writing patterns from past examples."], ["Retrieve examples", "Use embeddings to select the examples most relevant to the new brief."], ["Draft", "Generate a new post or script using the style profile and retrieved context."], ["Evaluate and revise", "Score style, brief adherence, platform fit, and copy risk before returning the draft."]],
-    groups: [["AI", ["Embeddings", "RAG", "Prompt engineering", "Agentic orchestration", "LLM-as-judge"]], ["Quality", ["Style eval", "Originality check", "Human preference", "Revision loop"]], ["Production", ["Privacy", "Input validation", "Timeouts", "Versioned prompts", "Observability"]]],
+    steps: [["Learn the voice", "Extract recurring writing patterns from past examples."], ["Retrieve examples", "Use local embeddings to select examples relevant to the new brief."], ["Draft", "Generate a new post or script using the style profile and retrieved context."], ["Evaluate and revise", "Score style, brief adherence, platform fit, and copy risk before returning the draft."]],
+    groups: [["AI", ["Hugging Face embeddings", "RAG", "Prompt engineering", "Agentic orchestration", "LLM-as-judge"]], ["Quality", ["Style eval", "Originality check", "Human preference", "Revision loop"]], ["Production", ["Privacy", "Input validation", "Timeouts", "Provider fallback", "Observability"]]],
   },
   {
     number: "04",
     title: "SignalBrief",
     subtitle: "Multi-Source Research Agent",
     purpose: "Turn a noisy week of online discussion into the few signals that matter for one professional goal.",
-    body: "The agent searches public Reddit discussions, newsletter/blog analysis, public LinkedIn posts when indexable, and primary technical sources. It synthesizes evidence into a goal-specific digest and grades the result for relevance, source quality, and actionability.",
+    body: "The agent searches public web sources across community discussion, technical writing, and primary documentation. It synthesizes evidence into a goal-specific digest and grades the result for relevance, source quality, and actionability.",
     href: "/projects/research-agent",
     steps: [["Define the goal", "Use the user's objective as the ranking function for relevance."], ["Search multiple source types", "Use live web search instead of one closed feed."], ["Synthesize", "Resolve overlap and contradictions, then explain why each signal matters."], ["Evaluate", "Score relevance, synthesis, actionability, diversity, and citation coverage."]],
-    groups: [["AI", ["GPT-5.6 Terra", "Web search tool", "Agent prompting", "LLM-as-judge"]], ["Research", ["Freshness", "Source diversity", "Provenance", "Contradiction handling"]], ["Production", ["Cron pattern", "Deduplication", "PostgreSQL", "Feedback loop", "Online evals"]]],
+    groups: [["AI", ["Web search tool", "Agent prompting", "Model routing", "LLM-as-judge"]], ["Research", ["Freshness", "Source diversity", "Provenance", "Contradiction handling"]], ["Production", ["Cron pattern", "Deduplication", "PostgreSQL reference", "Feedback loop", "Online evals"]]],
   },
   {
     number: "05",
@@ -59,13 +59,13 @@ const projects = [
   },
   {
     number: "06",
-    title: "VibeCheck",
-    subtitle: "Product Strategy Playground",
-    purpose: "Get a group from “I’m down for anything” to a real plan without one person becoming the unpaid coordinator.",
-    body: "VibeCheck is a product-sense case study for a lightweight group-planning product. It shows the full PM loop: frame the job, separate assumptions from evidence, prioritize an MVP under capacity constraints, define a north-star metric and guardrails, and design the experiment before claiming success.",
-    href: "/projects/vibecheck",
-    steps: [["Frame the job", "Define the user outcome before brainstorming features."], ["Map assumptions", "Treat the causes of planning friction as hypotheses to validate."], ["Prioritize under constraint", "Use RICE plus a fixed build budget to force tradeoffs."], ["Measure and learn", "Define the north star, guardrails, launch criteria, and next discovery questions."]],
-    groups: [["Product", ["JTBD", "Problem framing", "PRD thinking", "MVP scoping", "Roadmapping"]], ["Decision making", ["RICE prioritization", "Capacity tradeoffs", "Non-goals", "Success criteria"]], ["Growth + learning", ["North-star metrics", "A/B testing", "Funnel metrics", "Qualitative research", "Guardrails"]]],
+    title: "Enough",
+    subtitle: "Product Management + Full-Stack Product",
+    purpose: "Float a casual plan without committing to host it unless enough friends independently say yes.",
+    body: "Enough is a working link-first social planning product built around blind quorum. Before a threshold is reached, friends see the aggregate count but not who committed. At quorum the plan auto-confirms, reveals the yes guest list, and becomes ready for calendar handoff. The project includes discovery, competitive research, PRD, product metrics, experiments, launch planning, privacy decisions, and production database architecture.",
+    href: "/projects/enough",
+    steps: [["Discover the real friction", "Separate turnout uncertainty from time scheduling and event-hosting problems."], ["Choose the wedge", "Test blind quorum plus post-confirmation reveal instead of copying a generic RSVP flow."], ["Ship the MVP", "Create, share, privately RSVP, automatically confirm, reveal, and add to calendar."], ["Measure the outcome", "Track quorum conversion, time to quorum, repeat creation, and whether confirmed plans actually happen."]],
+    groups: [["Product", ["JTBD", "Competitive research", "PRD", "MVP scope", "Metrics", "A/B tests", "Launch roadmap"]], ["Application", ["Next.js 16", "React 19", "TypeScript", "Web Share API", "ICS", "Responsive UX"]], ["Production", ["Supabase", "PostgreSQL", "RLS", "Atomic transactions", "Hashed capability tokens", "Resend hook", "Vercel"]]],
   },
 ] as const;
 
@@ -76,7 +76,7 @@ export default function ProjectsPage() {
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Selected projects</p>
           <h1 className="mt-5 max-w-5xl text-balance text-5xl font-semibold tracking-[-0.05em] md:text-7xl">Different problems need different systems.</h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Each project starts with a plain-language problem. Expand “How does it work?” only when you want the architecture, product decisions, and tool depth.</p>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Each project starts with a plain-language problem. Expand “How does it work?” when you want the architecture, product decisions, and tool depth.</p>
           <div className="mt-8 flex flex-wrap gap-3"><Link href="/projects/evaluations" className="btn-secondary">How I evaluate these systems →</Link><Link href="/" className="btn-secondary">Back to portfolio</Link></div>
         </div>
       </section>
