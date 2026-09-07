@@ -8,8 +8,13 @@ export type HuggingFaceChatResult = {
   outputTokens: number;
 };
 
+type ChatMessage = {
+  content?: string | Array<{ type?: string; text?: string }> | null;
+  reasoning_content?: string | null;
+};
+
 type ChatCompletionBody = {
-  choices?: Array<{ message?: { content?: string } }>;
+  choices?: Array<{ message?: ChatMessage }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number };
 };
 
@@ -21,6 +26,18 @@ export const HUGGING_FACE_MODELS = {
 
 export function huggingFaceConfigured() {
   return Boolean(process.env.HF_TOKEN);
+}
+
+function messageText(message: ChatMessage | undefined) {
+  if (!message) return "";
+  if (typeof message.content === "string") return message.content.trim();
+  if (Array.isArray(message.content)) {
+    return message.content
+      .map((part) => typeof part?.text === "string" ? part.text : "")
+      .join("")
+      .trim();
+  }
+  return "";
 }
 
 async function invokeModel(
@@ -41,11 +58,19 @@ async function invokeModel(
       messages: [{ role: "user", content: input }],
       max_tokens: maxTokens,
       temperature,
+      reasoning_effort: "low",
+      stream: false,
     }),
   }, { attempts: 3, baseDelayMs: 300, maxDelayMs: 1800, timeoutMs: 35_000 });
 
-  const text = response.data.choices?.[0]?.message?.content?.trim() ?? "";
-  if (!text) throw new Error("Hugging Face model returned an empty response.");
+  const message = response.data.choices?.[0]?.message;
+  const text = messageText(message);
+  if (!text) {
+    const reasoningOnly = Boolean(message?.reasoning_content?.trim());
+    throw new Error(reasoningOnly
+      ? "Hugging Face model exhausted its response budget during reasoning before producing final text."
+      : "Hugging Face model returned an empty response.");
+  }
 
   return {
     text,
