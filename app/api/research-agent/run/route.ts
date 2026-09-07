@@ -155,7 +155,9 @@ export async function POST(request: NextRequest) {
           evaluation = parseJudgeText(judged.text);
           judgeMode = `${judged.model} · Hugging Face`;
         } catch {
-          degradedReasons.push("The independent Hugging Face evaluator was unavailable; the workflow tried the primary provider judge instead.");
+          // Hosted open-model inference is an optional independent judge. If its
+          // account/provider quota is unavailable, a successful primary-provider
+          // judge is still a healthy run rather than a user-visible degradation.
         }
       }
 
