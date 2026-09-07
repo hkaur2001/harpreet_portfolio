@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { InvestigationResult, RemediationAction } from "@/lib/sentinel/types";
 
 type ScenarioSummary = {
@@ -143,6 +143,14 @@ function formatCost(value: number) {
   return value === 0 ? "$0.000000" : `$${value.toFixed(6)}`;
 }
 
+function progressCopy(mode: "live" | "deterministic", elapsed: number) {
+  if (mode === "deterministic") return "Replaying the bounded evidence plan and policy checks…";
+  if (elapsed < 4) return "Connecting to the live model and opening the bounded tool set…";
+  if (elapsed < 10) return "The model is deciding which read-only evidence sources are most useful…";
+  if (elapsed < 20) return "Sentinel may be making several tool calls and updating its hypothesis…";
+  return "The live run is still active. It will fall back safely instead of spinning indefinitely if the model does not finish in time.";
+}
+
 export function SentinelConsole({
   scenarios,
   liveConfigured,
@@ -159,27 +167,61 @@ export function SentinelConsole({
   const [status, setStatus] = useState<"idle" | "investigating" | "remediating">("idle");
   const [error, setError] = useState("");
   const [rejected, setRejected] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const investigationRef = useRef<HTMLElement | null>(null);
+  const recoveryRef = useRef<HTMLElement | null>(null);
 
   const scenario = useMemo(() => scenarios.find((item) => item.id === scenarioId) ?? scenarios[0], [scenarioId, scenarios]);
   const guide = scenario ? SCENARIO_GUIDE[scenario.id] : undefined;
+  const busy = status !== "idle";
+
+  useEffect(() => {
+    if (status !== "investigating") return;
+    const started = Date.now();
+    setElapsed(0);
+    const timer = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, [status]);
+
+  useEffect(() => {
+    if (recovery) recoveryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [recovery]);
 
   async function investigate() {
+    const selectedScenario = scenarioId;
+    const selectedMode = mode;
     setStatus("investigating");
     setError("");
+    setResult(null);
     setRecovery(null);
     setRejected(false);
+    setElapsed(0);
+
+    window.requestAnimationFrame(() => investigationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 58_000);
     try {
       const response = await fetch("/api/sentinel/investigate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenarioId, mode }),
+        body: JSON.stringify({ scenarioId: selectedScenario, mode: selectedMode }),
+        signal: controller.signal,
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Investigation failed.");
       setResult(body);
+      window.requestAnimationFrame(() => investigationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Investigation failed.");
+      setError(
+        err instanceof DOMException && err.name === "AbortError"
+          ? "The investigation exceeded the browser time limit. Try again, or use Deterministic replay for an immediate full trace."
+          : err instanceof Error
+            ? err.message
+            : "Investigation failed.",
+      );
     } finally {
+      window.clearTimeout(timeout);
       setStatus("idle");
     }
   }
@@ -216,13 +258,15 @@ export function SentinelConsole({
             <label className="mt-6 block text-sm font-semibold" htmlFor="sentinel-scenario">Incident story</label>
             <select
               id="sentinel-scenario"
-              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm outline-none focus:border-[var(--signal)]"
+              disabled={busy}
+              className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm outline-none focus:border-[var(--signal)] disabled:cursor-wait disabled:opacity-60"
               value={scenarioId}
               onChange={(event) => {
                 setScenarioId(event.target.value);
                 setResult(null);
                 setRecovery(null);
                 setRejected(false);
+                setError("");
               }}
             >
               {scenarios.map((item) => <option key={item.id} value={item.id}>{SCENARIO_GUIDE[item.id]?.label ?? item.title}</option>)}
@@ -265,15 +309,25 @@ export function SentinelConsole({
             <p className="mt-1 text-xs leading-5 text-[var(--muted)]">Live mode lets OpenAI choose the next read-only tool. The policy layer still controls authority.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={!liveConfigured} onClick={() => setMode("live")} className={mode === "live" ? "btn-primary rounded-full px-4" : "btn-secondary"}>Live OpenAI</button>
-            <button type="button" onClick={() => setMode("deterministic")} className={mode === "deterministic" ? "btn-primary rounded-full px-4" : "btn-secondary"}>Deterministic replay</button>
-            <button type="button" onClick={investigate} disabled={status !== "idle"} className="btn-primary rounded-full px-5 disabled:cursor-wait disabled:opacity-60">{status === "investigating" ? "Investigating…" : "Start investigation →"}</button>
+            <button type="button" disabled={!liveConfigured || busy} onClick={() => setMode("live")} className={mode === "live" ? "btn-primary rounded-full px-4 disabled:opacity-60" : "btn-secondary disabled:opacity-60"}>Live OpenAI</button>
+            <button type="button" disabled={busy} onClick={() => setMode("deterministic")} className={mode === "deterministic" ? "btn-primary rounded-full px-4 disabled:opacity-60" : "btn-secondary disabled:opacity-60"}>Deterministic replay</button>
+            <button type="button" onClick={investigate} disabled={busy} className="btn-primary rounded-full px-5 disabled:cursor-wait disabled:opacity-60">{status === "investigating" ? `Investigating… ${elapsed}s` : "Start investigation →"}</button>
           </div>
         </div>
+
+        {status === "investigating" && (
+          <div aria-live="polite" className="mt-4 flex items-start gap-3 rounded-2xl border border-[var(--signal)]/25 bg-[var(--bg)] p-4">
+            <div className="mt-0.5 size-5 shrink-0 animate-spin rounded-full border-2 border-[var(--line)] border-t-[var(--signal)]" />
+            <div>
+              <p className="text-sm font-semibold">{mode === "live" ? "Live investigation is running" : "Deterministic replay is running"} · {elapsed}s</p>
+              <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{progressCopy(mode, elapsed)}</p>
+            </div>
+          </div>
+        )}
         {error && <div role="alert" className="mt-4 rounded-xl border border-[var(--orange)]/30 bg-[var(--soft)] p-3 text-sm">{error}</div>}
       </section>
 
-      <section className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-6 md:p-8">
+      <section ref={investigationRef} className="scroll-mt-24 rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--signal)]">Step 2 · Watch the investigation</p>
@@ -283,9 +337,16 @@ export function SentinelConsole({
           {result && <div className="rounded-xl bg-[var(--soft)] px-4 py-3 text-right text-xs"><p className="font-mono font-semibold">{result.model}</p><p className="mt-1 text-[var(--muted)]">{result.mode === "live" ? "live model run" : "deterministic replay"}</p></div>}
         </div>
 
+        {result?.fallbackReason && (
+          <div className="mt-5 rounded-xl border border-[var(--orange)]/30 bg-[var(--bg)] p-4 text-sm">
+            <strong>Live-mode fallback completed successfully.</strong>
+            <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{result.fallbackReason}</p>
+          </div>
+        )}
+
         {!result && status !== "investigating" && <div className="mt-8 grid min-h-56 place-items-center rounded-2xl border border-dashed border-[var(--line)] bg-[var(--bg)] p-8 text-center"><div className="max-w-lg"><p className="text-lg font-semibold">Nothing has run yet.</p><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Choose an incident above and click Start investigation. The technical trace will appear here only after you know what problem the system is trying to solve.</p></div></div>}
 
-        {status === "investigating" && !result && <div className="mt-8 grid min-h-56 place-items-center rounded-2xl border border-dashed border-[var(--line)] bg-[var(--bg)] p-8 text-center"><div><div className="mx-auto size-8 animate-spin rounded-full border-2 border-[var(--line)] border-t-[var(--signal)]" /><p className="mt-4 font-semibold">Collecting evidence and updating the diagnosis…</p><p className="mt-2 text-sm text-[var(--muted)]">The live model may use several tool calls before it has enough evidence.</p></div></div>}
+        {status === "investigating" && !result && <div aria-live="polite" className="mt-8 grid min-h-56 place-items-center rounded-2xl border border-[var(--signal)]/25 bg-[var(--bg)] p-8 text-center"><div><div className="mx-auto size-8 animate-spin rounded-full border-2 border-[var(--line)] border-t-[var(--signal)]" /><p className="mt-4 font-semibold">Collecting evidence and updating the diagnosis…</p><p className="mt-2 text-sm text-[var(--muted)]">{progressCopy(mode, elapsed)}</p><p className="mt-3 font-mono text-xs text-[var(--signal)]">elapsed {elapsed}s</p></div></div>}
 
         {result && <div className="mt-8 grid gap-3 lg:grid-cols-2">{result.trace.map((step) => <div key={`${step.index}-${step.tool}`} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">{TOOL_LABELS[step.tool] ?? label(step.tool)}</p><code className="mt-1 block text-[11px] text-[var(--muted)]">{step.tool}()</code></div><span className="font-mono text-[10px] text-[var(--muted)]">{step.latencyMs}ms</span></div><p className="mt-3 text-xs leading-5 text-[var(--muted)]"><strong className="text-[var(--ink)]">What it found:</strong> {step.summary}</p></div>)}</div>}
       </section>
@@ -320,7 +381,8 @@ export function SentinelConsole({
               <p className="mt-2 text-xs leading-5 text-white/70">The model proposes an action. Separate deterministic code checks the action, environment, permission, and risk. High-risk production actions cannot execute without approval.</p>
             </div>
 
-            {!recovery && !rejected && result.diagnosis.remediation.action !== "no_action" && <div className="mt-6 flex flex-wrap gap-2">{result.policy.requiresApproval ? <><button type="button" onClick={remediate} disabled={status !== "idle"} className="btn-primary rounded-full px-5">{status === "remediating" ? "Applying…" : "Approve simulated action"}</button><button type="button" onClick={() => setRejected(true)} className="btn-secondary">Reject</button></> : <button type="button" onClick={remediate} disabled={status !== "idle"} className="btn-primary rounded-full px-5">Apply safe simulated action</button>}</div>}
+            {!recovery && !rejected && result.diagnosis.remediation.action !== "no_action" && <div className="mt-6 flex flex-wrap gap-2">{result.policy.requiresApproval ? <><button type="button" onClick={remediate} disabled={busy} className="btn-primary rounded-full px-5 disabled:cursor-wait disabled:opacity-60">{status === "remediating" ? "Applying…" : "Approve simulated action"}</button><button type="button" onClick={() => setRejected(true)} disabled={busy} className="btn-secondary disabled:opacity-60">Reject</button></> : <button type="button" onClick={remediate} disabled={busy} className="btn-primary rounded-full px-5 disabled:cursor-wait disabled:opacity-60">{status === "remediating" ? "Applying…" : "Apply safe simulated action"}</button>}</div>}
+            {result.diagnosis.remediation.action === "no_action" && <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm"><strong>No automated action is appropriate.</strong><p className="mt-1 text-xs leading-5 text-[var(--muted)]">Sentinel preserves the evidence and escalates rather than manufacturing certainty.</p></div>}
             {rejected && <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm"><strong>Action rejected.</strong><p className="mt-1 text-xs leading-5 text-[var(--muted)]">The investigation remains available for a human engineer to continue. Nothing was changed.</p></div>}
           </div>
         </section>
@@ -329,7 +391,7 @@ export function SentinelConsole({
       {result && <section className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-6 md:p-8"><div className="grid gap-4 md:grid-cols-4"><div><p className="text-xs text-[var(--muted)]">Total run time</p><p className="mt-1 text-xl font-semibold">{(result.metrics.latencyMs / 1000).toFixed(1)}s</p></div><div><p className="text-xs text-[var(--muted)]">Tool calls</p><p className="mt-1 text-xl font-semibold">{result.metrics.toolCalls}</p></div><div><p className="text-xs text-[var(--muted)]">Model tokens</p><p className="mt-1 text-xl font-semibold">{result.metrics.inputTokens + result.metrics.outputTokens}</p></div><div><p className="text-xs text-[var(--muted)]">Estimated model cost</p><p className="mt-1 text-xl font-semibold">{formatCost(result.metrics.estimatedCostUsd)}</p></div></div><p className="mt-5 text-xs leading-5 text-[var(--muted)]">These are run-level observability signals. The separate CI safety suite currently covers {evalSummary.totalCases} governance cases with {evalSummary.approvalBypasses} approval bypasses.</p></section>}
 
       {recovery && (
-        <section className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-6 md:p-8">
+        <section ref={recoveryRef} className="scroll-mt-24 rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-6 md:p-8">
           <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--green)]">Step 5 · Recovery verified</p>
           <h3 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">The simulated service recovered.</h3>
           <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{recovery.verification}</p>
