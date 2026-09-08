@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createEnoughPlan, EnoughConfigError, EnoughValidationError } from "@/lib/enough/server";
+import { createEnoughPlan, EnoughConfigError, EnoughValidationError } from "@/lib/enough/rpc-server";
 
 export const runtime = "nodejs";
 
