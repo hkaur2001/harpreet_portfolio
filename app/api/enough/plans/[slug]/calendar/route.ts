@@ -1,4 +1,4 @@
-import { EnoughConfigError, EnoughNotFoundError, getEnoughPlan } from "@/lib/enough/server";
+import { EnoughConfigError, EnoughNotFoundError, getEnoughPlan } from "@/lib/enough/rpc-server";
 
 export const runtime = "nodejs";
 
