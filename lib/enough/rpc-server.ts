@@ -144,8 +144,22 @@ export async function respondToEnoughPlan(slug: string, raw: unknown) {
     throw new EnoughValidationError(current.status === "confirmed" ? "This plan already locked in." : "Commitments are closed for this plan.");
   }
 
-  const input = validateRsvpPayload(raw, { timeOptions: current.timeOptions, placeOptions: current.placeOptions });
-  const body = await rpc("enough_respond_by_slug", {
+  const body = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+  const response = body.response;
+  const normalized = response === "yes"
+    ? {
+        ...body,
+        timeOptionIds: Array.isArray(body.timeOptionIds) && body.timeOptionIds.length
+          ? body.timeOptionIds
+          : current.timeOptions.map((item) => item.id),
+        placeOptionIds: Array.isArray(body.placeOptionIds) && body.placeOptionIds.length
+          ? body.placeOptionIds
+          : current.placeOptions.map((item) => item.id),
+      }
+    : body;
+
+  const input = validateRsvpPayload(normalized, { timeOptions: current.timeOptions, placeOptions: current.placeOptions });
+  const result = await rpc("enough_respond_by_slug", {
     p_slug: slug,
     p_participant_key_hash: hash(input.participantToken),
     p_display_name: input.name,
@@ -154,11 +168,11 @@ export async function respondToEnoughPlan(slug: string, raw: unknown) {
     p_time_option_ids: input.timeOptionIds,
     p_place_option_ids: input.placeOptionIds,
   });
-  mapRpcError(body);
+  mapRpcError(result);
 
   return {
-    justConfirmed: Boolean(body?.just_confirmed),
-    view: getView(body),
+    justConfirmed: Boolean(result?.just_confirmed),
+    view: getView(result),
   };
 }
 
