@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { enoughHealth } from "@/lib/enough/server";
+import { enoughHealth } from "@/lib/enough/rpc-server";
 
 export const runtime = "nodejs";
 
