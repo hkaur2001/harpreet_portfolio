@@ -6,7 +6,7 @@ import {
   EnoughForbiddenError,
   EnoughNotFoundError,
   EnoughValidationError,
-} from "@/lib/enough/server";
+} from "@/lib/enough/rpc-server";
 
 export const runtime = "nodejs";
 
