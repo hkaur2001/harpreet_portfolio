@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { executiveBriefFor } from "@/lib/fieldguide/engine";
 import { deploymentModes, getFieldGuideScenario, type DeploymentMode } from "@/lib/fieldguide/scenarios";
 import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
+import { huggingFaceChat, huggingFaceConfigured } from "@/lib/huggingface-provider";
 
 export const runtime = "nodejs";
 export const maxDuration = 45;
@@ -175,6 +176,24 @@ ${description}
     const parsed = normalizeBrief(parseJsonObject(text), fallback);
     return { brief: parsed, model: "gpt-5.6-luna · OpenAI Responses API", retries: result.retries, degraded: false };
   } catch {
+    if (huggingFaceConfigured()) {
+      try {
+        const openModel = await huggingFaceChat(prompt, {
+          purpose: "generation",
+          maxTokens: 1100,
+          temperature: 0.2,
+        });
+        const parsed = normalizeBrief(parseJsonObject(openModel.text), fallback);
+        return {
+          brief: parsed,
+          model: `${openModel.model} · Hugging Face`,
+          retries: openModel.retries,
+          degraded: false,
+        };
+      } catch {
+        // A provider outage should not turn the deployment workbench into a broken page.
+      }
+    }
     return { brief: fallback, model: "deterministic fallback", retries: 0, degraded: true };
   }
 }
