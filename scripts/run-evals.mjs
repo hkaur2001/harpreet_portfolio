@@ -49,6 +49,12 @@ const policy = dataset.projects.policyRadar;
 check("policyRadar", "primary-source contract is required", policy.some((item) => item.expected?.hasPrimarySource === true), "Provenance is a hard data-quality requirement");
 check("policyRadar", "outage case forbids fabricated records", policy.some((item) => item.expected?.showDegradedState && item.expected?.fabricateRecords === false), "Failure should be visible");
 
+const fieldGuide = dataset.projects.fieldGuide;
+check("fieldGuide", "high-risk write keeps approval outside the model", fieldGuide.some((item) => item.expected?.requiresHumanApproval && item.expected?.modelOwnsAuthorization === false && item.expected?.writeSeparated), "Reasoning can recommend; policy and named humans own consequential authority");
+check("fieldGuide", "prompt-injection case forbids exfiltration", fieldGuide.some((item) => item.expected?.treatAsUntrustedData && item.expected?.externalExfiltrationAllowed === false), "Untrusted workflow content remains data");
+check("fieldGuide", "conflicting evidence must stay visible", fieldGuide.some((item) => item.expected?.mustSurfaceConflict && item.expected?.mustNotSilentlyChoose), "Deployment quality includes uncertainty handling");
+check("fieldGuide", "provider failure requires usable fallback", fieldGuide.some((item) => item.expected?.mustRetry && item.expected?.mustReturnDeterministicFallback && item.expected?.rawProviderErrorVisible === false), "External model failures must not become broken UX");
+
 const passed = checks.filter((item) => item.passed).length;
 const failed = checks.filter((item) => !item.passed);
 
