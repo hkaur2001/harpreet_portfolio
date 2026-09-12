@@ -6,6 +6,12 @@ This repository is my public engineering portfolio: a small set of working produ
 
 ## Selected projects
 
+### FieldGuide — enterprise AI deployment workbench
+
+FieldGuide is the portfolio's deployment-strategy flagship. It starts before the model call: map the real operator workflow, systems, exceptions, decision boundary, and failure cost; rank candidate automation wedges by value, readiness, reversibility, sponsor strength, and risk; configure a governed runbook; replay representative cases; inject a worker interruption; run golden-set release gates; and sequence shadow mode → assisted production → bounded automation.
+
+The public project includes three synthetic enterprise scenarios (vendor risk, consulting diligence, and hardware change review), a live/custom deployment-strategy endpoint with deterministic fallback, per-step model-routing logic, explicit human and policy gates, and deployed-production stress/smoke validation. Reference architecture under [`fieldguide/`](./fieldguide) includes MCP v2, Temporal durable-workflow, and policy-as-code examples. Reference components are labeled as such rather than presented as if they run inside Vercel.
+
 ### Sentinel — AI production incident response
 
 When a production service breaks, the symptom is often obvious before the cause is. Sentinel investigates a simulated incident across metrics, logs, deployments, database diagnostics, service health, source changes, runbooks, and prior incidents.
