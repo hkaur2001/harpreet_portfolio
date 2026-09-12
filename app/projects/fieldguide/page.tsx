@@ -10,7 +10,7 @@ export const metadata = {
 const stack = [
   {
     label: "Live in the public project",
-    items: ["Next.js 16", "React 19", "TypeScript", "OpenAI Responses API", "Structured strategy synthesis", "Deterministic policy engine", "Golden-set evals", "Fault injection", "Production CI"],
+    items: ["Next.js 16", "React 19", "TypeScript", "OpenAI Responses API", "Hugging Face open-model fallback", "Structured strategy synthesis", "Deterministic policy engine", "Golden-set evals", "Fault injection", "Production CI"],
   },
   {
     label: "Enterprise patterns implemented",
