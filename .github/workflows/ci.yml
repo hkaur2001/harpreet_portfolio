@@ -68,9 +68,24 @@ jobs:
       - name: Validate local platform configuration
         run: docker compose -f ../docker-compose.yml config >/dev/null
 
+  fieldguide-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compile FieldGuide Python reference surfaces
+        run: python -m py_compile fieldguide/reference/mcp_server.py fieldguide/reference/temporal_workflow.py
+      - name: Validate deny-by-default policy reference
+        run: |
+          grep -Fq "default allow := false" fieldguide/reference/policy.rego
+          grep -Fq "default require_approval := false" fieldguide/reference/policy.rego
+          grep -Fq "unapproved_external" fieldguide/reference/policy.rego
+
   production-smoke:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [web, agent-runtime, sentinel-backend]
+    needs: [web, agent-runtime, sentinel-backend, fieldguide-reference]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
