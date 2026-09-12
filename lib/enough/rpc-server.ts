@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { fetchJsonWithRetry, UpstreamRequestError } from "@/lib/resilient-fetch";
 import {
   EnoughConfigError,
   EnoughForbiddenError,
@@ -34,26 +35,29 @@ function makeSlug() {
 
 async function rpc(name: string, payload: Record<string, unknown>) {
   const { url, key } = config();
-  const response = await fetch(`${url}/rest/v1/rpc/${name}`, {
-    method: "POST",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
-
-  const text = await response.text();
-  let body: unknown = null;
-  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
-
-  if (!response.ok) {
-    throw new EnoughConfigError(`Shared plan storage is temporarily unavailable (${response.status}).`);
+  try {
+    const result = await fetchJsonWithRetry<Record<string, unknown> | null>(`${url}/rest/v1/rpc/${name}`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    }, {
+      attempts: 4,
+      baseDelayMs: 300,
+      maxDelayMs: 2400,
+      timeoutMs: 12_000,
+    });
+    return result.data;
+  } catch (error) {
+    const status = error instanceof UpstreamRequestError ? error.status : 0;
+    throw new EnoughConfigError(status
+      ? `Shared plan storage is temporarily unavailable (${status}) after retrying.`
+      : "Shared plan storage is temporarily unavailable after retrying.");
   }
-
-  return body as Record<string, unknown> | null;
 }
 
 function mapRpcError(body: Record<string, unknown> | null) {
