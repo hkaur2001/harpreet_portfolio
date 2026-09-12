@@ -51,6 +51,7 @@ async function testPages() {
   const pages = [
     "/",
     "/projects",
+    "/projects/fieldguide",
     "/projects/sentinel",
     "/projects/secure-knowledge",
     "/projects/voice-agent",
@@ -86,8 +87,11 @@ async function testEnough() {
       title: "Production smoke — quorum test",
       emoji: "🧪",
       description: "Ephemeral CI plan used to validate privacy and threshold behavior.",
-      location: "Test location",
-      startsAt: new Date(now + 6 * 60 * 60 * 1000).toISOString(),
+      timeOptions: [
+        { startsAt: new Date(now + 6 * 60 * 60 * 1000).toISOString(), label: "Smoke option A" },
+        { startsAt: new Date(now + 7 * 60 * 60 * 1000).toISOString(), label: "Smoke option B" },
+      ],
+      placeOptions: [{ label: "Test location" }, { label: "Backup location" }],
       deadlineAt: new Date(now + 4 * 60 * 60 * 1000).toISOString(),
       threshold: 3,
       hostName: "CI Host",
@@ -103,7 +107,7 @@ async function testEnough() {
   const friendA = await request(`/api/enough/plans/${slug}/rsvp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "CI Friend A", response: "yes", participantToken: aToken }),
+    body: JSON.stringify({ name: "CI Friend A", response: "yes", participantToken: aToken, timeOptionIds: ["t1"], placeOptionIds: ["p1"] }),
   }, [200], 30_000);
   assert(friendA.json?.view?.yesCount === 2 && friendA.json?.view?.guestList === null && friendA.json?.view?.status === "open", "Enough revealed identities or confirmed before quorum.");
 
@@ -111,7 +115,7 @@ async function testEnough() {
   const friendB = await request(`/api/enough/plans/${slug}/rsvp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "CI Friend B", response: "yes", participantToken: bToken }),
+    body: JSON.stringify({ name: "CI Friend B", response: "yes", participantToken: bToken, timeOptionIds: ["t1"], placeOptionIds: ["p1"] }),
   }, [200], 30_000);
   assert(friendB.json?.justConfirmed === true, "Enough did not report the quorum transition.");
   assert(friendB.json?.view?.status === "confirmed", "Enough did not confirm at quorum.");
@@ -120,6 +124,32 @@ async function testEnough() {
   const calendar = await request(`/api/enough/plans/${slug}/calendar`, {}, [200], 20_000);
   assert(calendar.text.includes("BEGIN:VCALENDAR") && calendar.text.includes("Production smoke"), "Enough calendar export failed.");
   console.log("✓ Enough create → blind RSVP → atomic quorum → reveal → calendar production lifecycle");
+}
+
+async function testFieldGuide() {
+  const deterministic = await request("/api/fieldguide/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenarioId: "vendor-risk", deploymentMode: "vpc", live: false }),
+  }, [200], 30_000);
+  assert(deterministic.json?.brief?.firstPilot?.name, "FieldGuide returned no first-pilot recommendation.");
+  assert(Array.isArray(deterministic.json?.brief?.launchGates) && deterministic.json.brief.launchGates.length >= 3, "FieldGuide launch gates are incomplete.");
+  assert(deterministic.json?.metrics?.degraded === false, "FieldGuide deterministic strategy path degraded unexpectedly.");
+
+  const custom = await request("/api/fieldguide/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      scenarioId: "vendor-risk",
+      deploymentMode: "vpc",
+      live: true,
+      workflowDescription: "Our operations analysts review customer exceptions across ServiceNow, SharePoint policies, Snowflake history, and Slack. They spend hours rebuilding context, then a director approves high-risk exceptions before the analyst writes the disposition back to ServiceNow. The deployment must preserve per-action authorization and an auditable review trail.",
+    }),
+  }, [200], 60_000);
+  assert(custom.json?.brief?.executiveSummary?.length > 40, "FieldGuide custom analysis returned no useful executive summary.");
+  assert(custom.json?.brief?.firstPilot?.boundary?.length > 30, "FieldGuide custom analysis returned no authority boundary.");
+  assert(Array.isArray(custom.json?.brief?.questions) && custom.json.brief.questions.length >= 3, "FieldGuide custom analysis returned too few discovery questions.");
+  console.log(`✓ FieldGuide strategy engine; model=${custom.json.model}; degraded=${Boolean(custom.json?.metrics?.degraded)}`);
 }
 
 async function testVoiceprint() {
@@ -217,12 +247,13 @@ async function main() {
   await waitForDeployment();
   await testPages();
   await testEnough();
+  await testFieldGuide();
   await testVoiceprint();
   await testKnowledge();
   await testResearch();
   await testSentinel();
   await testAgentLabs();
-  console.log("\n✓ Production validation passed: deployed revision, Enough, provider configuration, graceful fallbacks, Sentinel, server agent labs, and all public project pages.");
+  console.log("\n✓ Production validation passed: deployed revision, FieldGuide, Enough, provider configuration, graceful fallbacks, Sentinel, server agent labs, and all public project pages.");
 }
 
 main().catch((error) => {
