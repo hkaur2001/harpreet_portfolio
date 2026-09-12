@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from temporalio import activity, workflow
+from temporalio.common import RetryPolicy
 
 
 @dataclass
@@ -72,14 +73,14 @@ class FieldGuidePilot:
             gather_evidence,
             payload,
             start_to_close_timeout=timedelta(seconds=30),
-            retry_policy=workflow.RetryPolicy(maximum_attempts=3),
+            retry_policy=RetryPolicy(maximum_attempts=3),
         )
 
         recommendation = await workflow.execute_activity(
             synthesize_recommendation,
             evidence,
             start_to_close_timeout=timedelta(seconds=45),
-            retry_policy=workflow.RetryPolicy(maximum_attempts=3),
+            retry_policy=RetryPolicy(maximum_attempts=3),
         )
 
         if recommendation.requires_approval:
@@ -89,7 +90,7 @@ class FieldGuidePilot:
             authorized_write,
             args=[recommendation, bool(self._approval)],
             start_to_close_timeout=timedelta(seconds=30),
-            retry_policy=workflow.RetryPolicy(maximum_attempts=3),
+            retry_policy=RetryPolicy(maximum_attempts=3),
         )
 
         return {
