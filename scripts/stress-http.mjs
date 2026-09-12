@@ -59,6 +59,7 @@ async function main() {
   const pages = [
     "/",
     "/projects",
+    "/projects/fieldguide",
     "/projects/sentinel",
     "/projects/secure-knowledge",
     "/projects/voice-agent",
@@ -86,6 +87,36 @@ async function main() {
   } else {
     console.log("✓ Enough collaborative persistence configured");
   }
+
+  const fieldGuideResults = await concurrent("FieldGuide strategy burst", 40, async (i) => {
+    const scenarioId = ["vendor-risk", "consulting-diligence", "hardware-change"][i % 3];
+    const result = await request("/api/fieldguide/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scenarioId, deploymentMode: "vpc", live: false }),
+    });
+    if (!result.json?.brief?.firstPilot?.name || !Array.isArray(result.json?.brief?.launchGates)) {
+      throw new Error("FieldGuide deterministic strategy contract failed.");
+    }
+    if (result.json?.metrics?.degraded) throw new Error("FieldGuide deterministic path should not degrade.");
+    return result;
+  });
+  if (fieldGuideResults.length !== 40) throw new Error("FieldGuide strategy burst did not complete.");
+
+  const fieldGuideFallback = await request("/api/fieldguide/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      scenarioId: "vendor-risk",
+      deploymentMode: "vpc",
+      live: true,
+      workflowDescription: "Our analysts review exceptions across ServiceNow, SharePoint, Snowflake, and Slack. They reconstruct context manually, compare policy with current case facts, escalate high-risk exceptions to a director, and write the approved disposition back to ServiceNow. The model must never authorize its own write actions.",
+    }),
+  });
+  if (!fieldGuideFallback.json?.brief?.executiveSummary || !fieldGuideFallback.json?.brief?.firstPilot?.boundary) {
+    throw new Error("FieldGuide live/fallback strategy contract failed.");
+  }
+  assertRetryObserved("FieldGuide", [fieldGuideFallback]);
 
   await concurrent("Policy Radar delivery burst", 40, async () => {
     const result = await request("/projects/policy-radar");
@@ -174,13 +205,14 @@ async function main() {
   if (recovered.json?.status !== "recovered" || recovered.json?.simulated !== true) throw new Error("Sentinel recovery contract failed.");
   console.log("✓ Sentinel approval + recovery boundary");
 
+  await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflowDescription: "too short", live: true }) }, [400]);
   await request("/api/voice-agent/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ samples: "too short", brief: "short" }) }, [400]);
   await request("/api/research-agent/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: "short", topics: "x" }) }, [400]);
   await request("/api/knowledge/query", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: "x", persona: "employee" }) }, [400]);
   await request("/api/sentinel/investigate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "missing", mode: "deterministic" }) }, [404]);
   console.log("✓ validation/error-path contracts");
 
-  console.log("\nStress suite passed: Enough, all selected pages, Policy Radar, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
+  console.log("\nStress suite passed: FieldGuide, Enough, all selected pages, Policy Radar, RAG, Voiceprint, SignalBrief, Sentinel investigation/remediation, validation paths, and injected rate-limit recovery.");
 }
 
 main().catch((error) => {
