@@ -8,7 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "evals:offline": "node scripts/run-evals.mjs",
-    "stress:http": "node scripts/stress-http.mjs"
+    "stress:http": "node scripts/stress-http.mjs",
+    "test:fieldguide:e2e": "playwright test e2e/fieldguide.spec.ts --project=chromium"
   },
   "dependencies": {
     "next": "16.3.3",
@@ -22,7 +23,10 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "tailwindcss": "4.3.3",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "@playwright/test": "^1.55.0"
   },
-  "engines": { "node": ">=22.0.0" }
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }
