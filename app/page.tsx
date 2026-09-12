@@ -5,6 +5,11 @@ import { experienceHighlights, impact, principles, site } from "@/lib/site";
 
 const toolkit = [
   {
+    area: "Deployment strategy + enterprise adoption",
+    tools: ["Workflow mapping", "Use-case sequencing", "Stakeholder discovery", "Pilot design", "Golden sets", "Rollout gates", "Human approval", "Deployment perimeters"],
+    proof: "FieldGuide: discovery → workflow economics → governed runbook → historical replay → eval gates → 30/60/90 deployment",
+  },
+  {
     area: "Product management + strategy",
     tools: ["Problem framing", "Jobs to be Done", "Competitive research", "PRDs", "MVP scoping", "North-star metrics", "Experiment design", "Roadmapping"],
     proof: "Enough: real problem → market research → product wedge → PRD → working product → metrics → private-beta plan",
@@ -64,13 +69,47 @@ export default function Home() {
 
       <section id="projects" className="border-b border-[var(--line)]">
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-          <SectionHeading eyebrow="Selected projects" title="Each project solves a different kind of problem." body="Sentinel demonstrates production agent systems, Secure Knowledge demonstrates retrieval and authorization, Enough demonstrates end-to-end product management plus a working consumer product, and Policy Radar demonstrates reliable software where an LLM is deliberately not the answer." />
+          <SectionHeading eyebrow="Selected projects" title="Each project solves a different kind of problem." body="FieldGuide demonstrates enterprise AI deployment strategy from workflow discovery through eval-gated rollout; Sentinel demonstrates production agent systems, Secure Knowledge demonstrates retrieval and authorization, Enough demonstrates end-to-end product management, and Policy Radar demonstrates reliable software where an LLM is deliberately not the answer." />
 
           <div className="mt-12 space-y-6">
+            <article className="overflow-hidden rounded-[2rem] border border-[#2e3b3e] bg-[#0d1618] text-white">
+              <div className="grid lg:grid-cols-[0.92fr_1.08fr]">
+                <div className="p-7 md:p-10">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full border border-[#b8ff5b]/35 bg-[#b8ff5b]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.13em] text-[#b8ff5b]">01 · Deployment strategy flagship</span>
+                    <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-white/45">Enterprise agents</span>
+                  </div>
+                  <h2 className="mt-5 text-balance text-4xl font-semibold tracking-[-0.05em] md:text-6xl">FieldGuide: turn a messy workflow into an AI deployment you can defend.</h2>
+                  <p className="mt-6 text-sm leading-7 text-white/60">Map the operator workflow, rank the first automation wedge, configure systems and permissions, replay a historical case, inject a worker failure, run golden-set gates, and sequence shadow mode → assisted production → bounded automation.</p>
+                  <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-white/[0.055] p-4"><p className="text-[10px] uppercase tracking-[0.12em] text-white/35">Starts with</p><p className="mt-2 text-sm font-semibold">Workflow economics</p></div>
+                    <div className="rounded-2xl bg-white/[0.055] p-4"><p className="text-[10px] uppercase tracking-[0.12em] text-white/35">Hard boundary</p><p className="mt-2 text-sm font-semibold">Model ≠ authority</p></div>
+                    <div className="rounded-2xl bg-white/[0.055] p-4"><p className="text-[10px] uppercase tracking-[0.12em] text-white/35">Release gate</p><p className="mt-2 text-sm font-semibold">Golden sets + policy</p></div>
+                  </div>
+                  <div className="mt-8 flex flex-wrap gap-3"><Link href="/projects/fieldguide" className="inline-flex items-center justify-center rounded-full bg-[#b8ff5b] px-5 py-3 text-sm font-black text-[#0d1618]">Open FieldGuide →</Link><a href="https://github.com/hkaur2001/harpreet_portfolio/tree/main/fieldguide" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white">Architecture ↗</a></div>
+                </div>
+                <div className="border-t border-white/10 p-7 md:p-10 lg:border-l lg:border-t-0">
+                  <ProjectHowItWorks
+                    steps={[
+                      { title: "Discover", body: "Map operators, systems, handoffs, exceptions, baseline pain, and the real decision boundary." },
+                      { title: "Sequence", body: "Score candidate workflows on value, readiness, reversibility, sponsor strength, and risk." },
+                      { title: "Pilot safely", body: "Run a governed trace where identity, policy, approval, and writes sit outside model authority." },
+                      { title: "Prove + roll out", body: "Golden-set regressions gate changes; cohort expands before consequential authority." },
+                    ]}
+                    toolGroups={[
+                      { label: "Strategy", items: ["Workflow mapping", "Use-case sequencing", "30/60/90 rollout", "Stakeholder operating model"] },
+                      { label: "Agents", items: ["OpenAI Responses API", "Step-level routing", "MCP reference", "Durable workflow reference"] },
+                      { label: "Controls", items: ["Per-action authorization", "Human approval", "Golden-set evals", "Fault injection"] },
+                    ]}
+                  />
+                </div>
+              </div>
+            </article>
+
             <article className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-7 md:p-10">
               <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">01 · Flagship · Sentinel</p>
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">02 · Flagship · Sentinel</p>
                   <h2 className="mt-4 text-balance text-4xl font-semibold tracking-[-0.05em] md:text-6xl">Find the cause of a production incident before changing the wrong thing.</h2>
                   <p className="mt-6 text-base leading-7 text-[var(--muted)]">When a service suddenly fails, engineers usually jump between dashboards, logs, deployments, databases, runbooks, and code changes. Sentinel gives an AI investigation agent bounded access to those evidence sources, lets it decide what to inspect next, and keeps remediation behind deterministic policy and human approval.</p>
                   <div className="mt-8 flex flex-wrap gap-3"><Link href="/projects/sentinel" className="btn-primary rounded-full px-5">Run Sentinel →</Link><a href="https://github.com/hkaur2001/harpreet_portfolio/tree/main/sentinel" target="_blank" rel="noreferrer" className="btn-secondary">Source + architecture ↗</a></div>
@@ -94,7 +133,7 @@ export default function Home() {
             <article className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-7 md:p-10">
               <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">02 · Secure RAG · Authorization first</p>
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">03 · Secure RAG · Authorization first</p>
                   <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em]">Answer from company knowledge without leaking documents the user cannot access.</h2>
                   <p className="mt-5 text-sm leading-7 text-[var(--muted)]">Secure Knowledge Assistant makes authorization part of retrieval. A user identity is resolved first, inaccessible documents are removed, retrieval runs only over allowed knowledge, and the language model receives only authorized evidence.</p>
                   <Link href="/projects/secure-knowledge" className="btn-primary mt-8 rounded-full px-5">Run secure retrieval →</Link>
@@ -118,7 +157,7 @@ export default function Home() {
             <article className="overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--surface)]">
               <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
                 <div className="bg-[#1e1b18] p-7 text-white md:p-10">
-                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#cfc1ff]">03 · Product management + full-stack product</p>
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#cfc1ff]">04 · Product management + full-stack product</p>
                   <h2 className="mt-4 text-balance text-4xl font-semibold tracking-[-0.05em] md:text-5xl">Enough: a casual plan only becomes real when enough friends privately commit.</h2>
                   <p className="mt-6 text-sm leading-7 text-white/65">I took this from a personal problem through competitor research, product definition, PRD, MVP scope, privacy model, metrics, experiment design, architecture, and a working responsive web app. Before quorum only the count is visible; at quorum the plan auto-confirms and the guest list reveals.</p>
                   <div className="mt-7 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-white/8 p-4"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/45">Product hypothesis</p><p className="mt-2 text-sm">Blind conditional commitment can reduce “who else is going?” pressure.</p></div><div className="rounded-2xl bg-white/8 p-4"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/45">North-star direction</p><p className="mt-2 text-sm">Confirmed plans that actually happen—not time spent in the app.</p></div></div>
@@ -145,7 +184,7 @@ export default function Home() {
             <article className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-7 md:p-10">
               <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">04 · Live data product · AI Policy Radar</p>
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">05 · Live data product · AI Policy Radar</p>
                   <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em]">See new U.S. federal AI-related actions without manually searching government sites.</h2>
                   <p className="mt-5 text-sm leading-7 text-[var(--muted)]">Policy Radar reads the Federal Register API, normalizes recent AI-related documents, caches results, links every record to the primary source, and degrades cleanly when the upstream API is unavailable.</p>
                   <Link href="/projects/policy-radar" className="btn-primary mt-8 rounded-full px-5">Open Policy Radar →</Link>
