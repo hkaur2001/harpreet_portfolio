@@ -27,7 +27,7 @@ type StrategyBrief = {
   questions: string[];
 };
 
-type Tab = "discover" | "design" | "pilot" | "evals" | "rollout" | "custom";
+type Tab = "discover" | "design" | "pilot" | "evals" | "rollout" | "manage" | "custom";
 
 const tabs: Array<{ id: Tab; label: string; detail: string }> = [
   { id: "discover", label: "01 Discover", detail: "Workflow + pain" },
@@ -35,7 +35,8 @@ const tabs: Array<{ id: Tab; label: string; detail: string }> = [
   { id: "pilot", label: "03 Pilot", detail: "Trace + controls" },
   { id: "evals", label: "04 Evals", detail: "Golden set" },
   { id: "rollout", label: "05 Rollout", detail: "30 / 60 / 90" },
-  { id: "custom", label: "06 Your workflow", detail: "Live strategy" },
+  { id: "manage", label: "06 Manage", detail: "Owner + gates" },
+  { id: "custom", label: "07 Your workflow", detail: "Live strategy" },
 ];
 
 const kindLabel: Record<string, string> = {
@@ -87,6 +88,7 @@ export function FieldGuideConsole() {
   const [briefMeta, setBriefMeta] = useState<{ model: string; latencyMs: number; degraded: boolean } | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
+  const [activePhase, setActivePhase] = useState<"shadow" | "assisted" | "bounded">("shadow");
 
   const scenario = useMemo(
     () => fieldGuideScenarios.find((item) => item.id === scenarioId) ?? fieldGuideScenarios[0],
@@ -105,6 +107,7 @@ export function FieldGuideConsole() {
     setReview(null);
     setBrief(null);
     setError("");
+    setActivePhase("shadow");
   }
 
   async function runPilot() {
@@ -187,10 +190,22 @@ export function FieldGuideConsole() {
             ))}
           </div>
         </div>
+        {scenario.publicSource ? (
+          <div className="mt-5 rounded-2xl border border-[#7dd3fc]/25 bg-[#7dd3fc]/[0.055] p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7dd3fc]">Real-world public case · sourced</p>
+                <p className="mt-1 text-sm font-semibold">{scenario.publicSource.organization}</p>
+                <p className="mt-2 max-w-4xl text-[11px] leading-5 text-white/48">{scenario.publicSource.note}</p>
+              </div>
+              <a href={scenario.publicSource.url} target="_blank" rel="noreferrer" className="shrink-0 rounded-full border border-[#7dd3fc]/30 px-3 py-2 text-[10px] font-semibold text-[#b9e8ff]">Open public source ↗</a>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="border-b border-white/10 bg-black/10 px-3 py-3 md:px-6">
-        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-7">
           {tabs.map((item) => (
             <button
               key={item.id}
@@ -255,6 +270,22 @@ export function FieldGuideConsole() {
                 <span className="rounded-full bg-black/20 px-3 py-1.5">Operator · {scenario.operator}</span>
               </div>
             </div>
+
+            {scenario.publicSource ? (
+              <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7dd3fc]">What is sourced vs. proposed</p>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl bg-black/20 p-4">
+                    <p className="text-xs font-semibold">Publicly documented facts</p>
+                    {scenario.publicSource.facts.map((fact) => <p key={fact} className="mt-2 text-[10px] leading-5 text-white/48">✓ {fact}</p>)}
+                  </div>
+                  <div className="rounded-xl bg-black/20 p-4">
+                    <p className="text-xs font-semibold">FieldGuide proposal</p>
+                    <p className="mt-2 text-[10px] leading-5 text-white/48">The agent runbook, model routing, approval boundaries, evaluation set, rollout phases, and proposed supporting-evidence connector are a deployment hypothesis — not claims about Cleveland Clinic's internal implementation.</p>
+                  </div>
+                </div>
+              </section>
+            ) : null}
           </div>
         )}
 
@@ -475,6 +506,91 @@ export function FieldGuideConsole() {
                 <p className="mt-4 rounded-xl bg-black/20 p-3 text-[11px] leading-5 text-white/45">Sequence authority after evidence. The first release should learn the workflow and quality bar, not maximize autonomy.</p>
               </div>
             </section>
+          </div>
+        )}
+
+        {tab === "manage" && (
+          <div className="space-y-7">
+            <div className="grid gap-4 lg:grid-cols-[0.72fr_1.28fr]">
+              <section>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#b8ff5b]">Deployment control center</p>
+                <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em]">One screen for the owner, stage, gates, and next action.</h3>
+                <p className="mt-3 text-sm leading-6 text-white/50">This is the operator-facing management layer: it keeps the project understandable without asking someone to inspect traces, prompts, or infrastructure to know what happens next.</p>
+
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  {[
+                    ["shadow", "Shadow", "Observe beside experts"],
+                    ["assisted", "Assisted", "Human-reviewed production"],
+                    ["bounded", "Bounded", "Low-risk automation"],
+                  ].map(([id, label, detail]) => (
+                    <button key={id} onClick={() => setActivePhase(id as "shadow" | "assisted" | "bounded")} className={`rounded-xl border p-3 text-left transition ${activePhase === id ? "border-[#b8ff5b]/40 bg-[#b8ff5b]/[0.06]" : "border-white/10 bg-white/[0.025]"}`}>
+                      <p className="text-xs font-semibold">{label}</p>
+                      <p className="mt-1 text-[9px] leading-4 text-white/35">{detail}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7dd3fc]">Next best action</p>
+                  <p className="mt-2 text-sm font-semibold leading-6">
+                    {!trace.length
+                      ? "Run the historical pilot and inspect the governed trace."
+                      : !review
+                        ? "Capture an expert accept/correct decision on the pilot output."
+                        : !evalResult
+                          ? "Run the golden-set release gates before promoting a change."
+                          : evalResult.summary.launchBlocked
+                            ? "Keep the deployment blocked and fix the failing hard-control case."
+                            : activePhase === "shadow"
+                              ? "Quality gates are clear for a shadow-mode rollout review."
+                              : activePhase === "assisted"
+                                ? "Review operator acceptance and overrides before expanding the cohort."
+                                : "Keep automation bounded to low-risk, reversible actions and rerun evals on every change."}
+                  </p>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-white/10 bg-[#091012] p-5">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <Metric label="Business owner" value={scenario.sponsor} />
+                  <Metric label="Operator owner" value={scenario.operator} />
+                  <Metric label="Perimeter" value={deploymentModes[mode].label} />
+                  <Metric label="First pilot" value={firstPilot.name} />
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  {[
+                    ["Workflow mapped", true, "Systems, pain points, and decision boundary are defined."],
+                    ["Pilot selected", Boolean(firstPilot), firstPilot.rationale],
+                    ["Historical replay", trace.length > 0, trace.length ? `${trace.length} trace events captured.` : "Run the pilot from the Pilot tab."],
+                    ["Expert review", Boolean(review), review ? `Review state: ${review}.` : "Awaiting expert accept/correct signal."],
+                    ["Golden-set gate", Boolean(evalResult && !evalResult.summary.launchBlocked), evalResult ? `${evalResult.summary.passed}/${evalResult.summary.total} hard-control cases passed.` : "Golden set has not been run in this session."],
+                    ["Deployment plan", true, `${rollout.length} rollout phases defined for ${deploymentModes[mode].label}.`],
+                  ].map(([title, done, detail]) => (
+                    <div key={String(title)} className="rounded-xl border border-white/8 bg-white/[0.025] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold">{String(title)}</p>
+                        <span className={`text-[10px] font-bold ${done ? "text-[#b8ff5b]" : "text-[#facc15]"}`}>{done ? "READY" : "TODO"}</span>
+                      </div>
+                      <p className="mt-2 text-[10px] leading-5 text-white/40">{String(detail)}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <button onClick={() => setTab("pilot")} className="rounded-full bg-white px-3 py-2 text-[10px] font-bold text-[#0d1618]">Open pilot</button>
+                  <button onClick={() => setTab("evals")} className="rounded-full border border-white/15 px-3 py-2 text-[10px] font-semibold">Open evals</button>
+                  <button onClick={() => setTab("rollout")} className="rounded-full border border-white/15 px-3 py-2 text-[10px] font-semibold">Open rollout</button>
+                </div>
+              </section>
+            </div>
+
+            {scenario.publicSource ? (
+              <section className="rounded-2xl border border-[#7dd3fc]/20 bg-[#7dd3fc]/[0.045] p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7dd3fc]">Example management story · {scenario.publicSource.organization}</p>
+                <p className="mt-3 text-sm leading-7 text-white/65">A deployment strategist can select this case, see the documented ServiceNow + SecurityScorecard workflow, choose evidence assembly as the reversible first wedge, run the deterioration scenario, collect an expert decision, run the four hard-control cases, choose the customer-VPC perimeter, and then return here to see exactly what is ready and what is still blocking promotion. The workflow stays legible to the business owner even though the implementation underneath includes models, tools, policy, and durable execution.</p>
+              </section>
+            ) : null}
           </div>
         )}
 
