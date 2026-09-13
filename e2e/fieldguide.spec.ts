@@ -5,10 +5,10 @@ test.describe("FieldGuide deployment workbench", () => {
     await page.goto("/projects/fieldguide");
 
     await expect(page.getByRole("heading", { name: /Turn a messy workflow into an AI deployment you can defend/i })).toBeVisible();
-    await expect(page.getByText("Third-party vendor exception review", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Third-party vendor exception review", exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: /Consulting/i }).click();
-    await expect(page.getByText("Commercial diligence synthesis", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Commercial diligence synthesis", exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: /02 Design/i }).click();
     await expect(page.getByText("Automate the best learning loop first.", { exact: true })).toBeVisible();
@@ -58,7 +58,7 @@ test.describe("FieldGuide deployment workbench", () => {
       [/Hardware engineering/i, "Late engineering-change impact review"],
     ] as const) {
       await page.getByRole("button", { name: button }).click();
-      await expect(page.getByText(heading, { exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
     }
   });
 });
