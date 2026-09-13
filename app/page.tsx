@@ -61,7 +61,7 @@ export default function Home() {
             </div>
             <h1 className="max-w-5xl text-balance text-5xl font-semibold tracking-[-0.055em] sm:text-6xl md:text-7xl lg:text-[84px] lg:leading-[0.98]">I turn hard, ambiguous problems into software people can actually use.</h1>
             <p className="mt-8 max-w-3xl text-balance text-lg leading-8 text-[var(--muted)] md:text-xl">I work across product strategy, interfaces, backend services, AI systems, data integrations, security, reliability, and deployment. The projects below show both the decisions and the system working—not just a list of technologies.</p>
-            <div className="mt-9 flex flex-wrap gap-3"><Link href="#projects" className="btn-primary rounded-full px-5">Explore selected projects →</Link><Link href="#experience" className="btn-secondary">Production experience</Link></div>
+            <div className="mt-9 flex flex-wrap gap-3"><Link href="/projects/fieldguide" className="btn-primary rounded-full px-5">Open FieldGuide — featured project →</Link><Link href="#projects" className="btn-secondary">Explore all projects</Link><Link href="#experience" className="btn-secondary">Production experience</Link></div>
           </div>
           <div className="mt-20 grid gap-px overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--line)] md:grid-cols-4">{impact.map((item) => <div key={item.label} className="bg-[var(--surface)] p-6 md:p-7"><p className="text-3xl font-semibold tracking-[-0.04em]">{item.value}</p><p className="mt-2 text-sm font-medium">{item.label}</p><p className="mt-4 text-xs leading-5 text-[var(--muted)]">{item.detail}</p></div>)}</div>
         </div>
