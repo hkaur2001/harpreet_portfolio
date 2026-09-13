@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "evals:offline": "node scripts/run-evals.mjs",
     "stress:http": "node scripts/stress-http.mjs",
-    "test:fieldguide:e2e": "playwright test e2e/fieldguide.spec.ts --project=chromium"
+    "test:fieldguide:e2e": "playwright test e2e/fieldguide.spec.ts"
   },
   "dependencies": {
     "next": "16.3.3",
