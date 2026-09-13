@@ -109,5 +109,20 @@ test.describe("FieldGuide deployment workbench", () => {
       data: { workflowDescription: { nested: true }, live: false },
     });
     expect(invalidType.status()).toBe(400);
+
+    const emptyScenario = await request.post("/api/fieldguide/analyze", {
+      data: { scenarioId: "   ", live: false },
+    });
+    expect(emptyScenario.status()).toBe(400);
+
+    const arrayBody = await request.post("/api/fieldguide/analyze", {
+      data: [],
+    });
+    expect(arrayBody.status()).toBe(400);
+
+    const nullBody = await request.post("/api/fieldguide/analyze", {
+      data: null,
+    });
+    expect(nullBody.status()).toBe(400);
   });
 });
