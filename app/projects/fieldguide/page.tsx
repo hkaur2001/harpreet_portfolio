@@ -77,6 +77,38 @@ export default function FieldGuidePage() {
         </div>
       </section>
 
+      <section className="border-b border-[var(--line)] bg-[var(--surface)]">
+        <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-24">
+          <div className="grid gap-10 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Real-world example · public-source reconstruction</p>
+              <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em] md:text-5xl">Cleveland Clinic third-party risk, turned into a 3-minute deployment walkthrough.</h2>
+              <p className="mt-5 text-sm leading-7 text-[var(--muted)]">
+                Cleveland Clinic publicly describes using SecurityScorecard across RFx activity, new-vendor onboarding, continuous monitoring of higher-risk third parties, and self-monitoring. It also describes integrating SecurityScorecard with ServiceNow Vendor Risk Management to create a clearer one-stop view of third-party risk and reduce assessment time.
+              </p>
+              <p className="mt-4 text-xs leading-6 text-[var(--muted)]">
+                FieldGuide does not claim Cleveland Clinic is a customer. The documented systems and workflow facts come from the public case study; the agent runbook, approval design, eval set, and rollout plan are a proposed deployment reconstruction.
+              </p>
+              <a href="https://securityscorecard.com/resources/case-studies/cleveland-clinic/" target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center rounded-full border border-[var(--line)] px-4 py-2.5 text-xs font-semibold">Read the public source ↗</a>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["1 · Select the case", "Choose “Real-world case · Healthcare” in the workbench. The sourced facts and proposed assumptions are visibly separated."],
+                ["2 · Pick the first wedge", "FieldGuide ranks evidence assembly ahead of autonomous closure because it is useful, reversible, and easy to evaluate."],
+                ["3 · Run the pilot", "Replay a high-risk score deterioration, inspect every tool/model/policy/human step, and optionally inject a worker interruption."],
+                ["4 · Manage from one screen", "The Manage tab shows owner, deployment perimeter, first pilot, replay status, expert review, golden-set status, rollout stage, and the next best action."],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-5">
+                  <p className="text-sm font-semibold">{title}</p>
+                  <p className="mt-2 text-xs leading-6 text-[var(--muted)]">{body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="border-b border-[var(--line)]">
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
