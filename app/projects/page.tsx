@@ -94,23 +94,29 @@ export default function ProjectsPage() {
   return (
     <main>
       <section className="grid-field border-b border-[var(--line)]">
-        <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
+        <div className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-20">
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Selected projects</p>
-          <h1 className="mt-5 max-w-5xl text-balance text-5xl font-semibold tracking-[-0.05em] md:text-7xl">Different problems need different systems.</h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Each project starts with a plain-language problem. Expand “How does it work?” when you want the architecture, product decisions, and tool depth.</p>
+          <h1 className="mt-5 max-w-5xl text-balance text-5xl font-semibold tracking-[-0.05em] md:text-7xl">Selected systems, built end to end.</h1>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Start with the problem and open any project for the working experience. Expand the architecture panel for decisions, workflow, and technical depth.</p>
           <div className="mt-8 flex flex-wrap gap-3"><Link href="/projects/evaluations" className="btn-secondary">How I evaluate these systems →</Link><Link href="/" className="btn-secondary">Back to portfolio</Link></div>
         </div>
       </section>
       <section>
-        <div className="mx-auto max-w-7xl space-y-6 px-5 py-16 md:px-8 md:py-24">
+        <div className="mx-auto max-w-7xl space-y-5 px-5 py-12 md:px-8 md:py-16">
           {projects.map((project) => (
-            <article key={project.title} className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-7 md:p-9">
-              <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+            <article key={project.title} className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface)] p-6 transition-colors hover:border-[color:color-mix(in_srgb,var(--ink)_35%,var(--line))] md:p-8">
+              <div className="grid items-start gap-7 lg:grid-cols-[0.88fr_1.12fr]">
                 <div>
                   <p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--signal)]">{project.number} · {project.subtitle}</p>
-                  <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em]">{project.title}</h2>
-                  <p className="mt-5 text-xl font-medium leading-8">{project.purpose}</p>
-                  <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{project.body}</p>
+                  <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] md:text-4xl">{project.title}</h2>
+                  <div className="mt-5 border-l-2 border-[var(--signal)] pl-4">
+                    <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Purpose</p>
+                    <p className="mt-2 text-lg font-medium leading-7">{project.purpose}</p>
+                  </div>
+                  <div className="mt-5">
+                    <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">What it does</p>
+                    <p className="mt-2 max-w-2xl text-base leading-7 text-[var(--muted)]">{project.body}</p>
+                  </div>
                   {project.href.startsWith("http") ? <a href={project.href} target="_blank" rel="noreferrer" className="btn-primary mt-7 rounded-full px-5">Open live project ↗</a> : <Link href={project.href} className="btn-primary mt-7 rounded-full px-5">Open project →</Link>}
                 </div>
                 <ProjectHowItWorks steps={project.steps.map(([title, body]) => ({ title, body }))} toolGroups={project.groups.map(([label, items]) => ({ label, items: [...items] }))} />
