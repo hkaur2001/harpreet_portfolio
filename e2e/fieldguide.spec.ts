@@ -35,7 +35,14 @@ test.describe("FieldGuide deployment workbench", () => {
     await expect(page.getByText("Assisted production", { exact: true })).toBeVisible();
     await expect(page.getByText("Bounded automation", { exact: true })).toBeVisible();
 
-    await page.getByRole("button", { name: /06 Your workflow/i }).click();
+    await page.getByRole("button", { name: /06 Manage/i }).click();
+    await expect(page.getByText("Deployment control center", { exact: true })).toBeVisible();
+    await expect(page.getByText("Business owner", { exact: true })).toBeVisible();
+    await expect(page.getByText("Next best action", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: /Open evals/i }).click();
+    await expect(page.getByText("Release gate", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: /07 Your workflow/i }).click();
     const live = page.locator("#fieldguide-live");
     if (await live.isChecked()) await live.uncheck();
 
@@ -56,9 +63,39 @@ test.describe("FieldGuide deployment workbench", () => {
       [/Enterprise operations/i, "Third-party vendor exception review"],
       [/Consulting/i, "Commercial diligence synthesis"],
       [/Hardware engineering/i, "Late engineering-change impact review"],
+      [/Real-world case/i, "Cleveland Clinic third-party risk — public-source reconstruction"],
     ] as const) {
       await page.getByRole("button", { name: button }).click();
       await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
     }
+  });
+
+
+  test("real-world Cleveland Clinic case separates sourced facts from deployment assumptions", async ({ page }) => {
+    await page.goto("/projects/fieldguide");
+    await page.getByRole("button", { name: /Real-world case/i }).click();
+
+    await expect(page.getByRole("heading", { name: "Cleveland Clinic third-party risk — public-source reconstruction", exact: true })).toBeVisible();
+    await expect(page.getByText("Real-world public case · sourced", { exact: true })).toBeVisible();
+    await expect(page.getByText("ServiceNow Vendor Risk Management", { exact: true })).toBeVisible();
+    await expect(page.getByText("SecurityScorecard", { exact: true })).toBeVisible();
+    await expect(page.getByText("What is sourced vs. proposed", { exact: true })).toBeVisible();
+
+    const source = page.getByRole("link", { name: /Open public source/i });
+    await expect(source).toHaveAttribute("href", "https://securityscorecard.com/resources/case-studies/cleveland-clinic/");
+
+    await page.getByRole("button", { name: /03 Pilot/i }).click();
+    await expect(page.getByText("Risk score deterioration on a high-risk third party", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: /06 Manage/i }).click();
+    await expect(page.getByText(/Example management story · Cleveland Clinic/i)).toBeVisible();
+  });
+
+  test("invalid scenario IDs fail closed instead of silently loading another customer case", async ({ request }) => {
+    const response = await request.post("/api/fieldguide/analyze", {
+      data: { scenarioId: "does-not-exist", deploymentMode: "vpc", live: false },
+    });
+    expect(response.status()).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: "Unknown FieldGuide scenario." });
   });
 });
