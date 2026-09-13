@@ -136,6 +136,20 @@ async function testFieldGuide() {
   assert(Array.isArray(deterministic.json?.brief?.launchGates) && deterministic.json.brief.launchGates.length >= 3, "FieldGuide launch gates are incomplete.");
   assert(deterministic.json?.metrics?.degraded === false, "FieldGuide deterministic strategy path degraded unexpectedly.");
 
+  const realWorldCase = await request("/api/fieldguide/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenarioId: "cleveland-clinic-vendor-risk", deploymentMode: "vpc", live: false }),
+  }, [200], 30_000);
+  assert(realWorldCase.json?.scenario === "cleveland-clinic-vendor-risk", "FieldGuide real-world case ID was not preserved.");
+  assert(realWorldCase.json?.brief?.firstPilot?.name?.toLowerCase().includes("evidence"), "FieldGuide real-world case did not choose the reversible evidence-first pilot.");
+
+  await request("/api/fieldguide/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenarioId: "not-a-real-scenario", live: false }),
+  }, [400], 20_000);
+
   const custom = await request("/api/fieldguide/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -149,7 +163,7 @@ async function testFieldGuide() {
   assert(custom.json?.brief?.executiveSummary?.length > 40, "FieldGuide custom analysis returned no useful executive summary.");
   assert(custom.json?.brief?.firstPilot?.boundary?.length > 30, "FieldGuide custom analysis returned no authority boundary.");
   assert(Array.isArray(custom.json?.brief?.questions) && custom.json.brief.questions.length >= 3, "FieldGuide custom analysis returned too few discovery questions.");
-  console.log(`✓ FieldGuide strategy engine; model=${custom.json.model}; degraded=${Boolean(custom.json?.metrics?.degraded)}`);
+  console.log(`✓ FieldGuide strategy engine + Cleveland Clinic public reconstruction + fail-closed validation; model=${custom.json.model}; degraded=${Boolean(custom.json?.metrics?.degraded)}`);
 }
 
 async function testVoiceprint() {
