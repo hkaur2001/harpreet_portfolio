@@ -56,7 +56,7 @@ test.describe("FieldGuide deployment workbench", () => {
     await expect(page.getByText("full path", { exact: true })).toBeVisible();
   });
 
-  test("all three synthetic verticals render their scenario contracts", async ({ page }) => {
+  test("all built-in scenarios render their scenario contracts", async ({ page }) => {
     await page.goto("/projects/fieldguide");
 
     for (const [button, heading] of [
@@ -97,5 +97,23 @@ test.describe("FieldGuide deployment workbench", () => {
     });
     expect(response.status()).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ error: "Unknown FieldGuide scenario." });
+  });
+
+  test("malformed API inputs return bounded 4xx errors", async ({ request }) => {
+    const invalidMode = await request.post("/api/fieldguide/analyze", {
+      data: { scenarioId: "vendor-risk", deploymentMode: "moon", live: false },
+    });
+    expect(invalidMode.status()).toBe(400);
+
+    const invalidType = await request.post("/api/fieldguide/analyze", {
+      data: { workflowDescription: { nested: true }, live: false },
+    });
+    expect(invalidType.status()).toBe(400);
+
+    const malformedJson = await request.post("/api/fieldguide/analyze", {
+      headers: { "Content-Type": "application/json" },
+      data: "{not-json",
+    });
+    expect(malformedJson.status()).toBe(400);
   });
 });
