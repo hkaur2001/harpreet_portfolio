@@ -209,6 +209,9 @@ async function main() {
   await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "missing-scenario", live: false }) }, [400]);
   await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "vendor-risk", deploymentMode: "moon", live: false }) }, [400]);
   await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflowDescription: { nested: true }, live: false }) }, [400]);
+  await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "   ", live: false }) }, [400]);
+  await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify([]) }, [400]);
+  await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: "null" }, [400]);
   await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{not-json" }, [400]);
   await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflowDescription: "too short", live: true }) }, [400]);
   await request("/api/voice-agent/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ samples: "too short", brief: "short" }) }, [400]);
