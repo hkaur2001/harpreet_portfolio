@@ -9,6 +9,17 @@ export const metadata = {
 const projects = [
   {
     number: "01",
+    title: "Atlas",
+    subtitle: "AI Deployment Command Center",
+    purpose: "Turn a high-stakes enterprise AI rollout into an operating system leaders can inspect, govern, and move forward.",
+    body: "Atlas is an interactive deployment-strategy simulator built for complex enterprise AI programs. It brings rollout stages, stakeholders, risks, evidence, approvals, operating metrics, and next actions into one decision surface—showing how I connect technical implementation with customer outcomes and executive communication.",
+    href: "https://deployment-command-center.harpreet-kaur689368.chatgpt.site",
+    external: true,
+    steps: [["Frame the deployment", "Translate business objectives, technical constraints, stakeholders, and success measures into a shared plan."], ["Expose risk", "Make dependencies, blockers, blast radius, evidence, and accountable owners visible before launch."], ["Govern decisions", "Pair stage gates and human approvals with concrete readiness signals instead of vague status reporting."], ["Drive adoption", "Sequence next actions around measurable outcomes, operational ownership, and a durable customer rollout."]],
+    groups: [["Strategy", ["Enterprise discovery", "Deployment planning", "Stakeholder alignment", "Executive communication", "Adoption metrics"]], ["Product", ["Interactive decision surface", "Workflow design", "Risk visualization", "Responsive UI", "Scenario simulation"]], ["Engineering", ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS 4", "WebMCP"]]],
+  },
+  {
+    number: "02",
     title: "FieldGuide",
     subtitle: "Enterprise AI Deployment Workbench",
     purpose: "Turn a messy enterprise workflow into an AI deployment plan with explicit systems, permissions, evals, and rollout gates.",
@@ -18,7 +29,7 @@ const projects = [
     groups: [["Strategy", ["Workflow mapping", "Use-case sequencing", "Stakeholder plan", "30/60/90 rollout", "ROI + adoption metrics"]], ["Agent systems", ["OpenAI Responses API", "Step-level routing", "MCP reference", "Durable workflow reference", "Human approval"]], ["Enterprise controls", ["Per-action authorization", "Golden-set evals", "Fault injection", "OPA reference", "VPC / on-prem / air-gap planning"]]],
   },
   {
-    number: "02",
+    number: "03",
     title: "Sentinel",
     subtitle: "AI Production Incident Response",
     purpose: "Find the cause of a production failure before changing the wrong thing.",
@@ -28,7 +39,7 @@ const projects = [
     groups: [["AI", ["OpenAI Responses API", "Tool calling", "MCP", "Model routing", "Structured outputs"]], ["Backend", ["Python", "FastAPI", "Pydantic", "PostgreSQL", "pgvector"]], ["Production", ["Docker", "Kubernetes", "Terraform", "Redis", "GitHub Actions", "Observability"]]],
   },
   {
-    number: "03",
+    number: "04",
     title: "Secure Knowledge Assistant",
     subtitle: "Permission-aware RAG",
     purpose: "Answer from internal knowledge without leaking information the current user cannot access.",
@@ -38,7 +49,7 @@ const projects = [
     groups: [["AI", ["RAG", "Hybrid retrieval", "GPT-5.6 Luna", "Citations", "Evals"]], ["Data", ["PostgreSQL", "pgvector reference", "Metadata", "ACL filtering"]], ["Security", ["RBAC/ACLs", "OAuth/OIDC patterns", "Least privilege", "Auditability"]]],
   },
   {
-    number: "04",
+    number: "05",
     title: "Voiceprint Studio",
     subtitle: "Personalized Content Voice Agent",
     purpose: "Draft new content that matches a creator or brand's recurring style without copying their old posts.",
@@ -48,7 +59,7 @@ const projects = [
     groups: [["AI", ["Hugging Face embeddings", "RAG", "Prompt engineering", "Agentic orchestration", "LLM-as-judge"]], ["Quality", ["Style eval", "Originality check", "Human preference", "Revision loop"]], ["Production", ["Privacy", "Input validation", "Timeouts", "Provider fallback", "Observability"]]],
   },
   {
-    number: "05",
+    number: "06",
     title: "SignalBrief",
     subtitle: "Multi-Source Research Agent",
     purpose: "Turn a noisy week of online discussion into the few signals that matter for one professional goal.",
@@ -58,7 +69,7 @@ const projects = [
     groups: [["AI", ["Web search tool", "Agent prompting", "Model routing", "LLM-as-judge"]], ["Research", ["Freshness", "Source diversity", "Provenance", "Contradiction handling"]], ["Production", ["Cron pattern", "Deduplication", "PostgreSQL reference", "Feedback loop", "Online evals"]]],
   },
   {
-    number: "06",
+    number: "07",
     title: "AI Policy Radar",
     subtitle: "Live Public-Data Product",
     purpose: "Surface recent U.S. federal AI-related actions without manually searching government sites.",
@@ -68,7 +79,7 @@ const projects = [
     groups: [["Application", ["Next.js", "TypeScript", "Server Components", "REST API"]], ["Data", ["Normalization", "Caching", "Source provenance", "Error handling"]], ["Judgment", ["No unnecessary LLM", "Simple architecture", "Graceful degradation"]]],
   },
   {
-    number: "07",
+    number: "08",
     title: "Enough",
     subtitle: "Product Management + Full-Stack Product",
     purpose: "Float a casual plan without committing to host it unless enough friends independently say yes.",
@@ -100,7 +111,7 @@ export default function ProjectsPage() {
                   <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em]">{project.title}</h2>
                   <p className="mt-5 text-xl font-medium leading-8">{project.purpose}</p>
                   <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{project.body}</p>
-                  <Link href={project.href} className="btn-primary mt-7 rounded-full px-5">Open project →</Link>
+                  {project.external ? <a href={project.href} target="_blank" rel="noreferrer" className="btn-primary mt-7 rounded-full px-5">Open live project ↗</a> : <Link href={project.href} className="btn-primary mt-7 rounded-full px-5">Open project →</Link>}
                 </div>
                 <ProjectHowItWorks steps={project.steps.map(([title, body]) => ({ title, body }))} toolGroups={project.groups.map(([label, items]) => ({ label, items: [...items] }))} />
               </div>
