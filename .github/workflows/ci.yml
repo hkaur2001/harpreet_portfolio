@@ -16,6 +16,19 @@ jobs:
       - run: npm run typecheck
       - run: npm run evals:offline
       - run: npm run build
+      - name: Install Chromium for FieldGuide E2E
+        run: npx playwright install --with-deps chromium
+      - name: Run FieldGuide browser E2E
+        run: |
+          npm run start -- -H 127.0.0.1 -p 3000 >/tmp/fieldguide-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/projects/fieldguide >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/projects/fieldguide >/dev/null || (cat /tmp/fieldguide-next.log && exit 1)
+          FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:fieldguide:e2e
       - name: Run production HTTP stress suite with injected 429s
         run: |
           node scripts/mock-openai.mjs >/tmp/mock-openai.log 2>&1 &
