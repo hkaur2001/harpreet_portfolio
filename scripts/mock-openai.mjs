@@ -11,6 +11,7 @@ function kindFor(path, body) {
   if (input.includes("Evaluate a research digest")) return "research-judge";
   if (input.includes("You answer only from the supplied authorized sources")) return "knowledge-answer";
   if (input.includes("Revise the draft once")) return "voice-revision";
+  if (input.includes("enterprise AI deployment strategist")) return "fieldguide-strategy";
   return "responses";
 }
 
