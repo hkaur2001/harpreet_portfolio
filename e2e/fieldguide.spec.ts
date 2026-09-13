@@ -1,6 +1,17 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("FieldGuide deployment workbench", () => {
+  test("portfolio navigation and homepage expose FieldGuide", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "FieldGuide", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open FieldGuide — featured project/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /FieldGuide: turn a messy workflow into an AI deployment you can defend/i })).toBeVisible();
+
+    await page.goto("/projects");
+    await expect(page.getByRole("heading", { name: "FieldGuide", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open project/i }).first()).toHaveAttribute("href", "/projects/fieldguide");
+  });
+
   test("every primary workflow control produces a visible state change", async ({ page }) => {
     await page.goto("/projects/fieldguide");
 
