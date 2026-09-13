@@ -61,11 +61,22 @@ async function testPages() {
     "/enough",
     "/projects/evaluations",
   ];
+  const results = new Map();
   await Promise.all(pages.map(async (path) => {
     const result = await request(path, {}, [200], 25_000);
     assert(result.text.length > 300, `${path} returned an unexpectedly small page.`);
+    results.set(path, result);
   }));
-  console.log(`✓ ${pages.length} public product/project pages rendered`);
+
+  const home = results.get("/");
+  const projects = results.get("/projects");
+  const fieldGuide = results.get("/projects/fieldguide");
+  assert(home?.text.includes("FieldGuide"), "Homepage does not visibly contain FieldGuide.");
+  assert(home?.text.includes("/projects/fieldguide"), "Homepage does not link to FieldGuide.");
+  assert(projects?.text.includes("FieldGuide"), "Projects index does not visibly contain FieldGuide.");
+  assert(projects?.text.includes("/projects/fieldguide"), "Projects index does not link to FieldGuide.");
+  assert(fieldGuide?.text.includes("Enterprise AI Deployment Workbench"), "FieldGuide page did not render its project identity.");
+  console.log(`✓ ${pages.length} public product/project pages rendered; FieldGuide is visible + linked on homepage and projects index`);
 }
 
 async function testEnough() {
