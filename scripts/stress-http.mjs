@@ -89,7 +89,8 @@ async function main() {
   }
 
   const fieldGuideResults = await concurrent("FieldGuide strategy burst", 40, async (i) => {
-    const scenarioId = ["vendor-risk", "consulting-diligence", "hardware-change"][i % 3];
+    const scenarioIds = ["vendor-risk", "cleveland-clinic-vendor-risk", "consulting-diligence", "hardware-change"];
+    const scenarioId = scenarioIds[i % scenarioIds.length];
     const result = await request("/api/fieldguide/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -205,6 +206,7 @@ async function main() {
   if (recovered.json?.status !== "recovered" || recovered.json?.simulated !== true) throw new Error("Sentinel recovery contract failed.");
   console.log("✓ Sentinel approval + recovery boundary");
 
+  await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: "missing-scenario", live: false }) }, [400]);
   await request("/api/fieldguide/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflowDescription: "too short", live: true }) }, [400]);
   await request("/api/voice-agent/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ samples: "too short", brief: "short" }) }, [400]);
   await request("/api/research-agent/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: "short", topics: "x" }) }, [400]);
