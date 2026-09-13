@@ -69,9 +69,36 @@ export default function Home() {
 
       <section id="projects" className="border-b border-[var(--line)]">
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-          <SectionHeading eyebrow="Selected projects" title="Each project solves a different kind of problem." body="FieldGuide demonstrates enterprise AI deployment strategy from workflow discovery through eval-gated rollout; Sentinel demonstrates production agent systems, Secure Knowledge demonstrates retrieval and authorization, Enough demonstrates end-to-end product management, and Policy Radar demonstrates reliable software where an LLM is deliberately not the answer." />
+          <SectionHeading eyebrow="Selected projects" title="Each project solves a different kind of problem." body="Atlas demonstrates customer-facing enterprise AI deployment strategy in an interactive command center; FieldGuide goes from workflow discovery through eval-gated rollout; Sentinel demonstrates production agent systems; Secure Knowledge demonstrates retrieval and authorization; Enough demonstrates end-to-end product management; and Policy Radar demonstrates reliable software where an LLM is deliberately not the answer." />
 
           <div className="mt-12 space-y-6">
+            <article className="overflow-hidden rounded-[2rem] border border-[#4d3f73] bg-[#171326] text-white">
+              <div className="grid gap-8 p-7 md:p-10 lg:grid-cols-[0.9fr_1.1fr]">
+                <div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full border border-[#cfc1ff]/35 bg-[#cfc1ff]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.13em] text-[#cfc1ff]">New · Interactive deployment project</span>
+                    <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] text-white/50">Built for Context · Deployment Strategist</span>
+                  </div>
+                  <h2 className="mt-5 text-balance text-4xl font-semibold tracking-[-0.05em] md:text-6xl">Atlas: an AI deployment command center built for decisions, not status theater.</h2>
+                  <p className="mt-6 text-sm leading-7 text-white/65">Atlas turns a complex enterprise AI rollout into one inspectable operating surface: stages, stakeholders, risks, evidence, approvals, operating metrics, and the next actions needed to move a deployment forward.</p>
+                  <div className="mt-8 flex flex-wrap gap-3"><a href="https://deployment-command-center.harpreet-kaur689368.chatgpt.site" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full bg-[#cfc1ff] px-5 py-3 text-sm font-black text-[#171326]">Open Atlas live ↗</a><Link href="/projects" className="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white">View project details →</Link></div>
+                </div>
+                <ProjectHowItWorks
+                  steps={[
+                    { title: "Frame", body: "Translate customer outcomes, technical constraints, owners, and success measures into a shared deployment plan." },
+                    { title: "Expose risk", body: "Make blockers, dependencies, blast radius, evidence, and accountable owners visible before launch." },
+                    { title: "Govern", body: "Use readiness signals and human approvals to control high-stakes rollout decisions." },
+                    { title: "Advance", body: "Turn the current state into concrete next actions tied to adoption and operational outcomes." },
+                  ]}
+                  toolGroups={[
+                    { label: "Strategy", items: ["Enterprise discovery", "Deployment planning", "Stakeholder alignment", "Executive communication"] },
+                    { label: "Product", items: ["Decision surface", "Risk visualization", "Scenario simulation", "Responsive UX"] },
+                    { label: "Engineering", items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS 4", "WebMCP"] },
+                  ]}
+                />
+              </div>
+            </article>
+
             <article className="overflow-hidden rounded-[2rem] border border-[#2e3b3e] bg-[#0d1618] text-white">
               <div className="grid lg:grid-cols-[0.92fr_1.08fr]">
                 <div className="p-7 md:p-10">
