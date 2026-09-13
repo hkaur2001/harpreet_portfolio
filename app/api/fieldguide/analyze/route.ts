@@ -227,7 +227,11 @@ export async function POST(request: NextRequest) {
       live?: unknown;
     };
     try {
-      payload = await request.json() as typeof payload;
+      const parsed = await request.json();
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 });
+      }
+      payload = parsed as typeof payload;
     } catch {
       return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
     }
@@ -249,7 +253,11 @@ export async function POST(request: NextRequest) {
     }
 
     const mode = (payload.deploymentMode as DeploymentMode | undefined) ?? "vpc";
-    const scenarioId = payload.scenarioId as string | undefined;
+    const scenarioId = typeof payload.scenarioId === "string" ? payload.scenarioId.trim() : undefined;
+
+    if (payload.scenarioId !== undefined && !scenarioId) {
+      return NextResponse.json({ error: "scenarioId cannot be empty." }, { status: 400 });
+    }
 
     if (scenarioId && !fieldGuideScenarios.some((item) => item.id === scenarioId)) {
       return NextResponse.json({ error: "Unknown FieldGuide scenario." }, { status: 400 });
