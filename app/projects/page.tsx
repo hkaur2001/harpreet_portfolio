@@ -111,7 +111,7 @@ export default function ProjectsPage() {
                   <h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em]">{project.title}</h2>
                   <p className="mt-5 text-xl font-medium leading-8">{project.purpose}</p>
                   <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{project.body}</p>
-                  {project.external ? <a href={project.href} target="_blank" rel="noreferrer" className="btn-primary mt-7 rounded-full px-5">Open live project ↗</a> : <Link href={project.href} className="btn-primary mt-7 rounded-full px-5">Open project →</Link>}
+                  {project.href.startsWith("http") ? <a href={project.href} target="_blank" rel="noreferrer" className="btn-primary mt-7 rounded-full px-5">Open live project ↗</a> : <Link href={project.href} className="btn-primary mt-7 rounded-full px-5">Open project →</Link>}
                 </div>
                 <ProjectHowItWorks steps={project.steps.map(([title, body]) => ({ title, body }))} toolGroups={project.groups.map(([label, items]) => ({ label, items: [...items] }))} />
               </div>
