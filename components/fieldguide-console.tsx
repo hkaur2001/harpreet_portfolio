@@ -172,7 +172,7 @@ export function FieldGuideConsole() {
           <div>
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#b8ff5b]">
               <span className="h-2 w-2 rounded-full bg-[#b8ff5b]" />
-              Deployment workbench · synthetic enterprise data
+              {scenario.publicSource ? "Deployment workbench · public-source reconstruction" : "Deployment workbench · synthetic enterprise data"}
             </div>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] md:text-3xl">{scenario.title}</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/55">{scenario.oneLiner}</p>
@@ -362,7 +362,7 @@ export function FieldGuideConsole() {
         {tab === "pilot" && (
           <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
             <section>
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#b8ff5b]">Synthetic historical case</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#b8ff5b]">{scenario.publicSource ? "Public-source deployment scenario" : "Synthetic historical case"}</p>
               <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em]">{scenario.pilotCase.title}</h3>
               <p className="mt-3 text-sm leading-6 text-white/55">{scenario.pilotCase.brief}</p>
               <div className="mt-5 space-y-2">
