@@ -132,7 +132,7 @@ export default function FieldGuidePage() {
                 { title: "Expand cohort before authority", body: "Shadow mode comes first, then assisted production, then bounded write automation after evidence supports it." },
               ]}
               toolGroups={stack.map((group) => ({ label: group.label, items: group.items }))}
-              note="The public demo uses synthetic enterprise data. Reference infrastructure is labeled separately rather than presented as if it were running inside Vercel."
+              note="The workbench uses synthetic scenarios plus one clearly labeled public-source reconstruction. Reference infrastructure is labeled separately rather than presented as if it were running inside Vercel."
             />
           </div>
         </div>
