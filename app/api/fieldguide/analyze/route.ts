@@ -215,30 +215,55 @@ ${description}
 export async function POST(request: NextRequest) {
   const started = Date.now();
   try {
-    const payload = await request.json() as {
-      scenarioId?: string;
-      deploymentMode?: DeploymentMode;
-      workflowDescription?: string;
-      live?: boolean;
+    const declaredLength = Number(request.headers.get("content-length") ?? "0");
+    if (Number.isFinite(declaredLength) && declaredLength > 12_000) {
+      return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+    }
+
+    let payload: {
+      scenarioId?: unknown;
+      deploymentMode?: unknown;
+      workflowDescription?: unknown;
+      live?: unknown;
     };
+    try {
+      payload = await request.json() as typeof payload;
+    } catch {
+      return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    }
 
-    const mode = payload.deploymentMode && payload.deploymentMode in deploymentModes
-      ? payload.deploymentMode
-      : "vpc";
+    if (payload.scenarioId !== undefined && typeof payload.scenarioId !== "string") {
+      return NextResponse.json({ error: "scenarioId must be a string." }, { status: 400 });
+    }
+    if (payload.workflowDescription !== undefined && typeof payload.workflowDescription !== "string") {
+      return NextResponse.json({ error: "workflowDescription must be a string." }, { status: 400 });
+    }
+    if (payload.live !== undefined && typeof payload.live !== "boolean") {
+      return NextResponse.json({ error: "live must be a boolean." }, { status: 400 });
+    }
+    if (
+      payload.deploymentMode !== undefined &&
+      (typeof payload.deploymentMode !== "string" || !(payload.deploymentMode in deploymentModes))
+    ) {
+      return NextResponse.json({ error: "Unknown deployment mode." }, { status: 400 });
+    }
 
-    if (payload.scenarioId && !fieldGuideScenarios.some((item) => item.id === payload.scenarioId)) {
+    const mode = (payload.deploymentMode as DeploymentMode | undefined) ?? "vpc";
+    const scenarioId = payload.scenarioId as string | undefined;
+
+    if (scenarioId && !fieldGuideScenarios.some((item) => item.id === scenarioId)) {
       return NextResponse.json({ error: "Unknown FieldGuide scenario." }, { status: 400 });
     }
 
-    const scenario = getFieldGuideScenario(payload.scenarioId ?? "vendor-risk");
-    const custom = (payload.workflowDescription ?? "").trim();
+    const scenario = getFieldGuideScenario(scenarioId ?? "vendor-risk");
+    const custom = ((payload.workflowDescription as string | undefined) ?? "").trim();
 
     if (custom && (custom.length < 80 || custom.length > 6000)) {
       return NextResponse.json({ error: "Describe the workflow in 80–6,000 characters so the deployment analysis has enough signal." }, { status: 400 });
     }
 
     const fallback = custom ? heuristicCustomBrief(custom, mode) : executiveBriefFor(scenario, mode);
-    const result = payload.live && custom
+    const result = payload.live === true && custom
       ? await callOpenAI(custom, fallback, mode)
       : { brief: fallback, model: "deterministic strategy engine", retries: 0, degraded: false };
 
