@@ -13,8 +13,8 @@ export function ProjectHowItWorks({
   note?: string;
 }) {
   return (
-    <details className="group mt-7 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg)]">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-sm font-semibold marker:content-none">
+    <details className="group mt-7 w-full self-start overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg)] transition-colors open:bg-[var(--surface)]">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-sm font-semibold marker:content-none hover:bg-[var(--soft)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--signal)]">
         <span>How does it work?</span>
         <span aria-hidden="true" className="text-lg transition-transform group-open:rotate-45">+</span>
       </summary>
