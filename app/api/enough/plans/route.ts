@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { createEnoughPlan, EnoughConfigError, EnoughValidationError } from "@/lib/enough/rpc-server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const blocked = await guardPublicJsonPost(request, "enough-create", { maxBytes: 10_000 });
+  if (blocked) return blocked;
   try {
     const body = await request.json();
     const created = await createEnoughPlan(body);

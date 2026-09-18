@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
 import { huggingFaceChat, huggingFaceConfigured } from "@/lib/huggingface-provider";
 
@@ -110,11 +111,12 @@ function clientRetrieval(
   input: RetrievalInput | undefined,
   samples: string[],
 ): Array<{ index: number; sample: string; score: number }> | null {
-  if (!input?.ranked?.length) return null;
+  if (!Array.isArray(input?.ranked) || !input.ranked.length) return null;
   const seen = new Set<number>();
   const ranked: Array<{ index: number; sample: string; score: number }> = [];
 
   for (const item of input.ranked) {
+    if (!item || typeof item !== "object") continue;
     const index = Number(item.index);
     const score = Number(item.score);
     if (!Number.isInteger(index) || index < 0 || index >= samples.length || seen.has(index) || !Number.isFinite(score)) continue;
@@ -213,6 +215,8 @@ function deterministicJudge(draft: string, samples: string[], longestCopy: numbe
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await guardPublicJsonPost(request, "voice-agent", { maxBytes: 32_000 });
+  if (blocked) return blocked;
   const started = Date.now();
   try {
     const payload = await request.json() as {
@@ -222,6 +226,8 @@ export async function POST(request: NextRequest) {
       retrieval?: RetrievalInput | null;
       localRetrievalError?: string;
     };
+
+    if (typeof payload.samples !== "string" || typeof payload.brief !== "string" || (payload.format !== undefined && (typeof payload.format !== "string" || payload.format.length > 80)) || (payload.localRetrievalError !== undefined && typeof payload.localRetrievalError !== "string") || (payload.retrieval != null && (typeof payload.retrieval !== "object" || Array.isArray(payload.retrieval) || (payload.retrieval.model !== undefined && typeof payload.retrieval.model !== "string") || (payload.retrieval.engine !== undefined && typeof payload.retrieval.engine !== "string")))) return NextResponse.json({ error: "Writing samples, brief, and format must be valid text inputs." }, { status: 400 });
 
     const samples = (payload.samples ?? "").split(/\n\s*---\s*\n/g).map((item) => item.trim()).filter(Boolean);
     const brief = (payload.brief ?? "").trim();

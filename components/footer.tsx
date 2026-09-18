@@ -9,6 +9,7 @@ export function Footer() {
           <p className="mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">Software engineer working across full-stack products, applied AI, data integrations, and production systems.</p>
         </div>
         <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm md:justify-end">
+          <a className="underline decoration-[var(--line)] underline-offset-4 hover:decoration-[var(--ink)]" href="/security">Security</a>
           <a className="underline decoration-[var(--line)] underline-offset-4 hover:decoration-[var(--ink)]" href={site.github} target="_blank" rel="noreferrer">GitHub</a>
           <a className="underline decoration-[var(--line)] underline-offset-4 hover:decoration-[var(--ink)]" href={site.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
           <a className="underline decoration-[var(--line)] underline-offset-4 hover:decoration-[var(--ink)]" href={`mailto:${site.email}`}>{site.email}</a>

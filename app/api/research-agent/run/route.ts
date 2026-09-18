@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
 import { huggingFaceChat, huggingFaceConfigured } from "@/lib/huggingface-provider";
 
@@ -104,9 +105,12 @@ function degradedDigest(goal: string, topics: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await guardPublicJsonPost(request, "research", { maxBytes: 4_000 });
+  if (blocked) return blocked;
   const started = Date.now();
   try {
     const { goal: rawGoal, topics: rawTopics } = await request.json() as { goal?: string; topics?: string };
+    if (typeof rawGoal !== "string" || typeof rawTopics !== "string") return NextResponse.json({ error: "Goal and topics must be text." }, { status: 400 });
     const goal = (rawGoal ?? "").trim();
     const topics = (rawTopics ?? "").trim();
     if (goal.length < 20 || goal.length > 1500) return NextResponse.json({ error: "The professional goal must be between 20 and 1,500 characters." }, { status: 400 });

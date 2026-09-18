@@ -7,13 +7,17 @@ import {
   EnoughNotFoundError,
   EnoughValidationError,
 } from "@/lib/enough/rpc-server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request, context: { params: Promise<{ slug: string }> }) {
+  const blocked = await guardPublicJsonPost(request, "enough-host", { maxBytes: 3_000 });
+  if (blocked) return blocked;
   try {
     const { slug } = await context.params;
     const body = await request.json() as { action?: string; hostSecret?: string };
+    if (typeof body.hostSecret !== "string" || body.hostSecret.length < 16 || body.hostSecret.length > 200 || typeof body.action !== "string") return NextResponse.json({ error: "A valid host capability and action are required." }, { status: 400 });
     const secret = body.hostSecret ?? "";
     const view = body.action === "cancel"
       ? await cancelEnoughPlan(slug, secret)

@@ -14,11 +14,13 @@ jobs:
           node-version: 24
       - run: npm install
       - run: npm run typecheck
+      - run: npm run security:check
+      - run: npm audit --audit-level=high
       - run: npm run evals:offline
       - run: npm run build
-      - name: Install Chromium for FieldGuide E2E
+      - name: Install Chromium for browser E2E
         run: npx playwright install --with-deps chromium
-      - name: Run FieldGuide browser E2E + HTTP stress with injected 429s
+      - name: Run browser E2E + HTTP stress with injected 429s
         run: |
           node scripts/mock-openai.mjs >/tmp/mock-openai.log 2>&1 &
           MOCK_PID=$!
@@ -31,6 +33,8 @@ jobs:
           done
           curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null || (cat /tmp/portfolio-next.log && exit 1)
           FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:fieldguide:e2e
+          FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:atlas:e2e
+          npm run test:atlas:contracts
           EXPECT_PROVIDER_RETRIES=1 npm run stress:http
 
   agent-runtime:

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 import { executiveBriefFor } from "@/lib/fieldguide/engine";
 import { deploymentModes, fieldGuideScenarios, getFieldGuideScenario, type DeploymentMode } from "@/lib/fieldguide/scenarios";
 import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
@@ -213,6 +214,8 @@ ${description}
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await guardPublicJsonPost(request, "fieldguide", { maxBytes: 12_000 });
+  if (blocked) return blocked;
   const started = Date.now();
   try {
     const declaredLength = Number(request.headers.get("content-length") ?? "0");

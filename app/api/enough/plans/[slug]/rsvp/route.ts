@@ -5,10 +5,13 @@ import {
   EnoughValidationError,
   respondToEnoughPlan,
 } from "@/lib/enough/rpc-server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request, context: { params: Promise<{ slug: string }> }) {
+  const blocked = await guardPublicJsonPost(request, "enough-rsvp", { maxBytes: 5_000, requestsPerMinute: 120 });
+  if (blocked) return blocked;
   try {
     const { slug } = await context.params;
     const body = await request.json();

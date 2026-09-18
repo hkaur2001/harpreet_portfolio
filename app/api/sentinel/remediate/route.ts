@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { evaluatePolicy, isKnownAction } from "@/lib/sentinel/policy";
 import { getScenario } from "@/lib/sentinel/scenarios";
+import { guardPublicJsonPost } from "@/lib/request-security";
 
 export async function POST(request: NextRequest) {
+  const blocked = await guardPublicJsonPost(request, "sentinel-remediate", { maxBytes: 2_000 });
+  if (blocked) return blocked;
   let payload: { scenarioId?: string; action?: string; approved?: boolean };
   try { payload = await request.json(); } catch { return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 }); }
 
-  const scenario = payload.scenarioId ? getScenario(payload.scenarioId) : undefined;
+  if (typeof payload.scenarioId !== "string" || typeof payload.action !== "string" || (payload.approved !== undefined && typeof payload.approved !== "boolean")) return NextResponse.json({ error: "Invalid remediation input." }, { status: 400 });
+  const scenario = getScenario(payload.scenarioId);
   if (!scenario) return NextResponse.json({ error: "Unknown Sentinel scenario." }, { status: 404 });
   if (!payload.action || !isKnownAction(payload.action)) return NextResponse.json({ error: "Unknown remediation action." }, { status: 400 });
   if (payload.action !== scenario.groundTruth.expectedAction) {

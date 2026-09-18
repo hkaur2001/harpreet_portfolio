@@ -51,6 +51,8 @@ async function testPages() {
   const pages = [
     "/",
     "/projects",
+    "/projects/atlas",
+    "/security",
     "/projects/fieldguide",
     "/projects/sentinel",
     "/projects/secure-knowledge",
@@ -71,12 +73,16 @@ async function testPages() {
   const home = results.get("/");
   const projects = results.get("/projects");
   const fieldGuide = results.get("/projects/fieldguide");
+  const atlas = results.get("/projects/atlas");
+  assert(home?.text.includes("Atlas"), "Homepage does not visibly contain Atlas.");
+  assert(home?.text.includes("/projects/atlas"), "Homepage does not link to the native Atlas project.");
+  assert(projects?.text.includes("/projects/atlas"), "Projects index does not link to the native Atlas project.");
+  assert(atlas?.text.includes("AI Deployment Command Center"), "Atlas page did not render its project identity.");
   assert(home?.text.includes("FieldGuide"), "Homepage does not visibly contain FieldGuide.");
-  assert(home?.text.includes("/projects/fieldguide"), "Homepage does not link to FieldGuide.");
   assert(projects?.text.includes("FieldGuide"), "Projects index does not visibly contain FieldGuide.");
   assert(projects?.text.includes("/projects/fieldguide"), "Projects index does not link to FieldGuide.");
   assert(fieldGuide?.text.includes("Enterprise AI Deployment Workbench"), "FieldGuide page did not render its project identity.");
-  console.log(`✓ ${pages.length} public product/project pages rendered; FieldGuide is visible + linked on homepage and projects index`);
+  console.log(`✓ ${pages.length} public product/project pages rendered; Atlas and FieldGuide are visible and internally linked`);
 }
 
 async function testEnough() {

@@ -6,6 +6,14 @@ This repository is my public engineering portfolio: a small set of working produ
 
 ## Selected projects
 
+### Atlas — AI deployment command center
+
+Atlas's goal is simple: describe how a team works, then get a defensible first AI pilot and a safe 90-day rollout. Its live model-driven agent chooses which workflow evidence to inspect, compares candidates, checks delivery capacity and security controls, and produces an evidence-backed plan with owners, launch gates, assumptions, and discovery questions.
+
+The native application uses OpenAI Responses API function calling and strict structured output. Tool choice and deployment judgment are agentic; tool allowlists, argument validation, budgets, evidence-reference validation, and write authority are enforced in code. The public agent reads four synthetic industry scenarios, not customer systems. It has no external-write tools and does not persist briefs. If the provider fails or the recommendation lacks required evidence, the run fails visibly rather than substituting a deterministic plan.
+
+Implementation: [`lib/atlas/`](./lib/atlas), [`app/api/atlas/plan/`](./app/api/atlas/plan), and [`components/atlas-command-center.tsx`](./components/atlas-command-center.tsx). The UI follows describe → review plan → inspect evidence, with advanced constraints hidden until needed.
+
 ### FieldGuide — enterprise AI deployment workbench
 
 FieldGuide is the portfolio's deployment-strategy flagship. It starts before the model call: map the real operator workflow, systems, exceptions, decision boundary, and failure cost; rank candidate automation wedges by value, readiness, reversibility, sponsor strength, and risk; configure a governed runbook; replay representative cases; inject a worker interruption; run golden-set release gates; and sequence shadow mode → assisted production → bounded automation.
@@ -166,6 +174,8 @@ GitHub Actions validates:
 - local Docker Compose configuration
 - the exact deployed Vercel revision on `main`
 - all public project pages
+- Atlas desktop/mobile workflows, boundary conditions, and human-approval gating
+- Atlas real tool-loop contract under a test-only mock provider, provider retry recovery, malformed-input rejection, and budget limits
 - live Voiceprint, Secure Knowledge, SignalBrief, and Sentinel contracts
 - the three server-executed supporting agent labs
 

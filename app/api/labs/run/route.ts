@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 import type { LabSlug } from "@/lib/site";
 
 type TraceStep = {
@@ -199,8 +200,10 @@ function incidentCommander(scenario: string): RunResult {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await guardPublicJsonPost(request, "labs", { maxBytes: 8_000 });
+  if (blocked) return blocked;
   const payload = (await request.json()) as Payload;
-  if (!payload.slug || !payload.scenario) return NextResponse.json({ error: "slug and scenario are required" }, { status: 400 });
+  if (typeof payload.slug !== "string" || !["context-ops", "solution-architect", "incident-commander"].includes(payload.slug) || typeof payload.scenario !== "string" || payload.scenario.trim().length < 3 || payload.scenario.length > 4000) return NextResponse.json({ error: "Choose a valid lab and a text scenario of 3–4,000 characters." }, { status: 400 });
 
   const started = performance.now();
   const result = payload.slug === "context-ops"

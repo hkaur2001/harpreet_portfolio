@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { investigateDeterministically, investigateWithOpenAI } from "@/lib/sentinel/agent";
 import { allowLiveInvestigation } from "@/lib/sentinel/rate-limit";
 import { getScenario } from "@/lib/sentinel/scenarios";
+import { guardPublicJsonPost } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  const blocked = await guardPublicJsonPost(request, "sentinel-investigate", { maxBytes: 2_000 });
+  if (blocked) return blocked;
   let payload: { scenarioId?: string; mode?: "live" | "deterministic" };
   try {
     payload = await request.json();
@@ -14,7 +17,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
 
-  const scenario = payload.scenarioId ? getScenario(payload.scenarioId) : undefined;
+  if (typeof payload.scenarioId !== "string" || (payload.mode !== undefined && payload.mode !== "live" && payload.mode !== "deterministic")) return NextResponse.json({ error: "Choose a valid scenario and mode." }, { status: 400 });
+  const scenario = getScenario(payload.scenarioId);
   if (!scenario) return NextResponse.json({ error: "Unknown Sentinel scenario." }, { status: 404 });
 
   const requestedLive = payload.mode !== "deterministic";

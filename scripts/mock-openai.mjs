@@ -3,6 +3,7 @@ import http from "node:http";
 const counters = new Map();
 
 function kindFor(path, body) {
+  if (String(body?.instructions || "").includes("You are Atlas")) return "atlas";
   if (path.endsWith("/embeddings")) return "embeddings";
   const input = String(body?.input ?? "");
   if (input.includes("Analyze the recurring writing style")) return "voice-generate";
@@ -78,6 +79,25 @@ const server = http.createServer(async (req, res) => {
   if ((req.url || "").endsWith("/embeddings")) {
     const inputs = Array.isArray(body.input) ? body.input : [String(body.input ?? "")];
     payload = { data: inputs.map((text, index) => ({ index, embedding: vector(String(text)) })), usage: { total_tokens: inputs.length * 12 } };
+  } else if (kind === "atlas") {
+    const briefText = JSON.stringify(body.input || []);
+    if (briefText.includes("ATLAS_TEST_PROVIDER_FAILURE")) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: { message: "Synthetic provider outage" } }));
+      return;
+    }
+    const observed = (body.input || []).filter(i => i.type === "function_call_output");
+    const call = (name, index, id) => ({ type: "function_call", name, arguments: JSON.stringify({ workflow_index: index }), call_id: id });
+    if (body.text?.format?.name === "atlas_deployment_plan") {
+      payload = responseText(JSON.stringify({ goal: "Return analyst time without automating investment judgment", recommendedWorkflowIndex: 0, rationale: "Start with evidence synthesis: it is a reversible read-only pilot with a named reviewer and inspectable sources.", assumptions: ["Scenario estimates are synthetic and require customer validation."], discoveryQuestions: ["What are current cycle time and rework rates?", "Who owns source-level permissions?"], phases: [{ dayRange: "Days 1–30", objective: "Baseline and secure evidence", actions: ["Measure cycle time", "Build a representative golden set"], owner: "Business owner + security" }, { dayRange: "Days 31–60", objective: "Learn in shadow mode", actions: ["Review every output", "Replay failure slices"], owner: "Operator lead" }, { dayRange: "Days 61–90", objective: "Launch assisted cohort", actions: ["Keep consequential actions human-approved", "Measure operator acceptance"], owner: "Executive sponsor" }], launchGates: ["Zero permission violations", "Grounded claims at least 96%"], risks: ["Source contradictions and stale permissions"], metrics: ["Cycle time", "Rework", "Operator acceptance"], evidenceIds: ["atlas-e1", "atlas-e2", "atlas-e3", "atlas-e4"] }));
+    } else if (observed.length === 0) payload = { output: [call("inspect_workflow", 0, "atlas-call-1"), call("inspect_workflow", 1, "atlas-call-2")], usage: { input_tokens: 80, output_tokens: 60 } };
+    else if (observed.length === 2) payload = { output: [call("inspect_controls", 0, "atlas-call-3"), call("assess_capacity", 0, "atlas-call-4")], usage: { input_tokens: 100, output_tokens: 60 } };
+    else payload = responseText("Evidence gathering is complete.");
+    if (body.text?.format?.name === "atlas_deployment_plan" && briefText.includes("ATLAS_TEST_INVALID_EVIDENCE")) {
+      const plan = JSON.parse(payload.output[0].content[0].text);
+      plan.evidenceIds = ["invented-evidence"];
+      payload = responseText(JSON.stringify(plan));
+    }
   } else if (kind === "voice-generate") {
     payload = responseText(JSON.stringify({
       styleProfile: "Direct, reflective, first-person writing with short paragraphs, a concrete lesson, restrained punctuation, and a forward-looking close.",

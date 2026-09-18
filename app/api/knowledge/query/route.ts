@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardPublicJsonPost } from "@/lib/request-security";
 import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
 
 export const runtime = "nodejs";
@@ -116,11 +117,14 @@ async function answerWithModel(question: string, docs: Array<{ doc: KnowledgeDoc
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await guardPublicJsonPost(request, "knowledge", { maxBytes: 2_000 });
+  if (blocked) return blocked;
   const started = Date.now();
   try {
     const payload = await request.json() as { question?: string; persona?: string };
+    if (typeof payload.question !== "string" || (payload.persona !== undefined && (typeof payload.persona !== "string" || !Object.hasOwn(PERSONAS, payload.persona)))) return NextResponse.json({ error: "Choose a valid demo persona and a text question." }, { status: 400 });
     const question = payload.question?.trim() ?? "";
-    const persona = payload.persona && PERSONAS[payload.persona] ? payload.persona : "employee";
+    const persona = payload.persona ?? "employee";
     if (question.length < 3 || question.length > 500) return NextResponse.json({ error: "Question must be between 3 and 500 characters." }, { status: 400 });
 
     const groups = new Set(PERSONAS[persona]);

@@ -59,6 +59,7 @@ async function main() {
   const pages = [
     "/",
     "/projects",
+    "/projects/atlas",
     "/projects/fieldguide",
     "/projects/sentinel",
     "/projects/secure-knowledge",

@@ -5,6 +5,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: site.url, priority: 1 },
     { url: `${site.url}/projects`, priority: 1 },
+    { url: `${site.url}/projects/atlas`, priority: 1 },
+    { url: `${site.url}/security`, priority: 0.7 },
     { url: `${site.url}/projects/evaluations`, priority: 0.9 },
     { url: `${site.url}/projects/fieldguide`, priority: 1 },
     { url: `${site.url}/projects/sentinel`, priority: 1 },
