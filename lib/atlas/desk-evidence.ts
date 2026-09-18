@@ -16,7 +16,7 @@ export function readDeskSource(id: string): Source | null {
 export function calculateDeskMetric(id: DeskMetric): MetricObservation {
   const base = { id, caveat: "Synthetic figures; independent human verification required." };
   switch (id) {
-    case "revenue_growth": return { ...base, value: (480 / 420 - 1) * 100, unit: "%", formula: "(H1 2026 revenue 480 / H1 2025 revenue 420 − 1) × 100", sourceIds: ["F02"], caveat: "Reported growth, not the 9% organic growth stated by management." };
+    case "revenue_growth": return { ...base, value: (480 / 420 - 1) * 100, unit: "%", formula: "(H1 2026 revenue 480 / H1 2025 revenue 420 − 1) × 100", sourceIds: ["F02", "F03"], caveat: "Reported growth, not the 9% organic growth stated by management." };
     case "ebitda_margin": return { ...base, value: 96 / 480 * 100, unit: "%", formula: "H1 adjusted EBITDA 96 / H1 revenue 480 × 100", sourceIds: ["F02"] };
     case "leverage": return { ...base, value: (650 - 90) / (96 * 2), unit: "x", formula: "(Gross debt 650 − unrestricted cash 90) / (H1 EBITDA 96 × 2)", sourceIds: ["F02", "F05"], caveat: "Annualized H1 proxy, not contractual TTM covenant compliance or a credit rating." };
     case "leverage_stress": return { ...base, value: (650 - 90) / (96 * 2 * .8), unit: "x", formula: "(650 − 90) / (96 × 2 × 0.8); compare with demo ceiling 3.5x", sourceIds: ["F02", "F05"], caveat: "Illustrative 20% EBITDA downside holding debt/cash constant. Proxy exceeds 3.5x; actual compliance is unknown." };
