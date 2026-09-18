@@ -1,5 +1,5 @@
 import "server-only";
-import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
+import { fetchJsonWithRetry, openAiUrl, UpstreamRequestError } from "@/lib/resilient-fetch";
 import { verticals, type VerticalId } from "./scenarios";
 import type { AtlasAgentResult, AtlasPlan } from "./types";
 
@@ -72,13 +72,27 @@ export async function runAtlasAgent(input: AtlasInput): Promise<AtlasAgentResult
 
   async function call(extra: Record<string, unknown>) {
     if (Date.now() - started > 45_000) throw new Error("Agent reached its time budget.");
-    const result = await fetchJsonWithRetry<ModelResponse>(openAiUrl("responses"), {
+    const request = {
       method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model, instructions, input: messages, reasoning: { effort: "low" }, max_output_tokens: 1800, store: false, ...extra }),
-    }, { attempts: 2, timeoutMs: Math.min(15_000, Math.max(1_000, 55_000 - (Date.now() - started))), maxDelayMs: 500 });
-    modelCalls += 1; providerRetries += result.retries;
-    inputTokens += result.data.usage?.input_tokens ?? 0; outputTokens += result.data.usage?.output_tokens ?? 0;
-    return result.data;
+    };
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const remaining = 55_000 - (Date.now() - started);
+      if (remaining < 1_000) throw new Error("Agent reached its time budget.");
+      try {
+        const result = await fetchJsonWithRetry<ModelResponse>(openAiUrl("responses"), request, { attempts: 1, timeoutMs: Math.min(15_000, remaining) });
+        modelCalls += 1;
+        inputTokens += result.data.usage?.input_tokens ?? 0; outputTokens += result.data.usage?.output_tokens ?? 0;
+        return result.data;
+      } catch (error) {
+        if (attempt === 2 || (error instanceof UpstreamRequestError && !error.retryable)) throw error;
+        const delay = 1_000 * (2 ** attempt);
+        if (55_000 - (Date.now() - started) < delay + 1_000) throw error;
+        providerRetries += 1;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw new Error("Agent reached its time budget.");
   }
 
   for (let round = 0; round < 3; round += 1) {

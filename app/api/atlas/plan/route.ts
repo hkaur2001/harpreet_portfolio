@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       ["Agent omitted required deployment uncertainty.", "UNCERTAINTY_MISSING"],
     ]);
     const code = error instanceof UpstreamRequestError ? `PROVIDER_${error.status}` : error instanceof Error ? diagnostics.get(error.message) ?? (error.name === "TimeoutError" ? "PROVIDER_TIMEOUT" : error instanceof SyntaxError ? "PLAN_PARSE_FAILED" : "AGENT_FAILED") : "AGENT_FAILED";
+    if (code === "PROVIDER_429") return NextResponse.json({ error: "The model provider is busy. Please wait 10 seconds and retry. Your brief has not been saved, and no simulated plan was substituted.", code }, { status: 502, headers: { "Cache-Control": "no-store", "Retry-After": "10" } });
     return NextResponse.json({ error: "The agent could not complete an evidence-backed plan within its limits. Please retry or simplify the brief. No unsupported recommendation was returned.", code }, { status: 502, headers: { "Cache-Control": "no-store" } });
   }
 }
