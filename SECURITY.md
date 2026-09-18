@@ -22,7 +22,7 @@ Report suspected vulnerabilities privately to harpreetkaur622@gmail.com with the
 
 | Project | Data used | Persistence | Primary security boundary |
 | --- | --- | --- | --- |
-| Atlas | Synthetic industry evidence and submitted workflow brief | Request only | Model-selected read-only tools; validated arguments, budgets, evidence references, and no external writes |
+| Atlas | Public synthetic financial/industry evidence; submitted question, review feedback and accepted rules | Briefs: request/page memory; explicitly accepted process rules: this browser's localStorage | Model-selected read-only tools; validated arguments, budgets, actual-source citations, structured numeric/unit checks, no external writes. Browser rules never grant authority. |
 | FieldGuide | Public scenarios or submitted workflow text | None intended | Per-action authorization and eval-gated rollout |
 | Sentinel | Synthetic incident evidence | None | Allowlisted tools, policy-as-code, and approval; remediation is simulated |
 | Secure Knowledge | Synthetic documents and personas | None | ACL filtering occurs before retrieval and generation |

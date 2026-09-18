@@ -17,6 +17,7 @@ jobs:
       - run: npm run security:check
       - run: npm audit --audit-level=high
       - run: npm run evals:offline
+      - run: npm run test:atlas:desk:unit
       - run: npm run build
       - name: Install Chromium for browser E2E
         run: npx playwright install --with-deps chromium
@@ -26,7 +27,7 @@ jobs:
           MOCK_PID=$!
           OPENAI_API_KEY=ci-test-key OPENAI_BASE_URL=http://127.0.0.1:8787/v1 npm run start -- -H 127.0.0.1 -p 3000 >/tmp/portfolio-next.log 2>&1 &
           APP_PID=$!
-          trap 'kill $APP_PID $MOCK_PID 2>/dev/null || true; pkill -f "next-server" 2>/dev/null || true' EXIT
+          trap 'kill $APP_PID $MOCK_PID 2>/dev/null || true' EXIT
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null; then break; fi
             sleep 1
@@ -35,6 +36,7 @@ jobs:
           FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:fieldguide:e2e
           FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:atlas:e2e
           npm run test:atlas:contracts
+          npm run test:atlas:desk:contracts
           EXPECT_PROVIDER_RETRIES=1 npm run stress:http
 
   agent-runtime:

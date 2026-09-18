@@ -10,11 +10,11 @@ const projects = [
   {
     number: "01",
     title: "Atlas",
-    subtitle: "AI Deployment Command Center",
-    purpose: "Turn a high-stakes enterprise AI rollout into an operating system leaders can inspect, govern, and move forward.",
-    body: "Atlas is a live deployment-strategy agent. Describe a workflow; it chooses read-only tools to inspect candidate evidence, compare options, assess capacity and controls, and recommend a defensible first AI pilot with a safe 90-day rollout.",
+    subtitle: "Financial Research Desk + Deployment Strategy",
+    purpose: "Turn conflicting financial evidence into a cited analyst handoff—and a measurable, human-governed first pilot.",
+    body: "A live agent investigates fictional earnings, credit, and data-quality cases. It inspects approved and superseded sources, runs server-verified financial calculations, produces a cited brief, and reinvestigates reviewer corrections. Accepted process rules remain in the browser; a separate planner sequences the 90-day rollout.",
     href: "/projects/atlas",
-    steps: [["Frame the deployment", "Translate business objectives, technical constraints, stakeholders, and success measures into a shared plan."], ["Expose risk", "Make dependencies, blockers, blast radius, evidence, and accountable owners visible before launch."], ["Govern decisions", "Pair stage gates and human approvals with concrete readiness signals instead of vague status reporting."], ["Drive adoption", "Sequence next actions around measurable outcomes, operational ownership, and a durable customer rollout."]],
+    steps: [["Choose an analyst task", "Start with earnings changes, credit watch, or financial-data reconciliation."], ["Inspect and calculate", "The model chooses read-only tools; server arithmetic verifies metrics and source versions."], ["Challenge and review", "Inspect cited evidence, correct the draft, and explicitly accept a reusable process rule."], ["Scope the first pilot", "Define an accountable owner, shadow-mode gates, reviewer burden, and measurable operational outcomes."]],
     groups: [["Strategy", ["Enterprise discovery", "Deployment planning", "Stakeholder alignment", "Executive communication", "Adoption metrics"]], ["Product", ["Interactive decision surface", "Workflow design", "Risk visualization", "Responsive UI", "Scenario simulation"]], ["Engineering", ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS 4", "OpenAI tool calling"]]],
   },
   {

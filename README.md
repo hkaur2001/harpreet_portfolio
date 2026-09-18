@@ -6,13 +6,13 @@ This repository is my public engineering portfolio: a small set of working produ
 
 ## Selected projects
 
-### Atlas — AI deployment command center
+### Atlas — financial research desk
 
-Atlas's goal is simple: describe how a team works, then get a defensible first AI pilot and a safe 90-day rollout. Its live model-driven agent chooses which workflow evidence to inspect, compares candidates, checks delivery capacity and security controls, and produces an evidence-backed plan with owners, launch gates, assumptions, and discovery questions.
+Atlas turns conflicting financial data into a brief an analyst can defend. Choose earnings changes, credit watch, or financial-data reconciliation; its live agent inspects synthetic source versions, invokes reproducible financial calculations, and delivers a cited handoff with unknowns and a bounded deployment pilot. Inspect original evidence, challenge the draft, reinvestigate with reviewer feedback, explicitly accept a reusable procedural rule, and export the brief. The earlier 90-day industry deployment planner remains at `/projects/atlas/strategy`.
 
 The native application uses OpenAI Responses API function calling and strict structured output. Tool choice and deployment judgment are agentic; tool allowlists, argument validation, budgets, evidence-reference validation, and write authority are enforced in code. The public agent reads four synthetic industry scenarios, not customer systems. It has no external-write tools and does not persist briefs. If the provider fails or the recommendation lacks required evidence, the run fails visibly rather than substituting a deterministic plan.
 
-Implementation: [`lib/atlas/`](./lib/atlas), [`app/api/atlas/plan/`](./app/api/atlas/plan), and [`components/atlas-command-center.tsx`](./components/atlas-command-center.tsx). The UI follows describe → review plan → inspect evidence, with advanced constraints hidden until needed.
+Implementation: [`lib/atlas/`](./lib/atlas), [`app/api/atlas/research/`](./app/api/atlas/research), and [`components/atlas-research-desk.tsx`](./components/atlas-research-desk.tsx). Financial sources and the company are fictional; no licensed enterprise data, connections, company affiliations, or endorsements are implied. Briefs and feedback stay in page memory; explicitly accepted process rules persist only in this browser and are sent with subsequent requests. These rules are untrusted context, never permissions. See [`lib/atlas/DESK.md`](./lib/atlas/DESK.md) for architecture, golden checks, and enterprise gaps.
 
 ### FieldGuide — enterprise AI deployment workbench
 

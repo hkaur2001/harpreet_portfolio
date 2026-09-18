@@ -1,0 +1,5 @@
+import type { DeskTask } from "./desk-catalog";
+import type { MetricObservation } from "./desk-evidence";
+export type DeskInput = { task: DeskTask; question: string; reviewerFeedback: string; approvedRules: string[] };
+export type DeskBrief = { title: string; summary: string; findings: { metricId: string; value: number; unit: string; conclusion: string; sourceIds: string[]; caveat: string }[]; openQuestions: string[]; pilot: { owner: string; scope: string; launchGates: string[]; successMetrics: string[]; nextExperiment: string }; proposedRule: string; revisionSummary: string };
+export type DeskResult = { runId: string; mode: "live"; model: string; brief: DeskBrief; sources: { id: string; title: string }[]; calculations: MetricObservation[]; trace: { tool: string; detail: string; evidenceId: string; status: "observed" | "denied" }[]; checks: { name: string; passed: boolean; detail: string }[]; telemetry: { latencyMs: number; modelCalls: number; toolCalls: number; providerRetries: number; inputTokens: number; outputTokens: number }; appliedRules: string[] };

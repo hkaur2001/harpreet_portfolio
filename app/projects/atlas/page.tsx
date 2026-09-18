@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { AtlasCommandCenter } from "@/components/atlas-command-center";
+import { AtlasResearchDesk } from "@/components/atlas-research-desk";
 
 export const metadata: Metadata = {
-  title: "Atlas — AI Deployment Command Center",
+  title: "Atlas — Financial Research Desk",
   description:
-    "A live deployment-strategy agent that investigates workflow evidence and recommends a defensible first AI pilot with a safe 90-day rollout.",
+    "A live financial-workflow agent that reconciles synthetic evidence, runs reproducible calculations, and produces cited briefs with human review and a bounded deployment pilot.",
 };
 
 export default function AtlasPage() {
-  return <AtlasCommandCenter />;
+  return <AtlasResearchDesk />;
 }

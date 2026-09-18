@@ -80,9 +80,9 @@ export default function Home() {
                   <span className="rounded-full bg-[#cfc1ff] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] text-[#171326]">Featured</span>
                   <span className="rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/75">Enterprise AI deployment</span>
                 </div>
-                <h2 className="mt-6 max-w-3xl text-balance text-4xl font-semibold tracking-[-0.05em] md:text-6xl">Atlas finds the right first AI pilot—and a safe path to launch.</h2>
+                <h2 className="mt-6 max-w-3xl text-balance text-4xl font-semibold tracking-[-0.05em] md:text-6xl">Atlas turns conflicting financial evidence into a brief you can defend.</h2>
                 <p className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-[#cfc1ff]">What it does</p>
-                <p className="mt-2 max-w-2xl text-base leading-7 text-white/70">Describe a workflow. A live agent investigates candidate evidence, checks capacity and controls, then recommends the first AI pilot with a practical 90-day rollout.</p>
+                <p className="mt-2 max-w-2xl text-base leading-7 text-white/70">Choose earnings, credit watch, or data reconciliation. A live agent inspects a synthetic evidence pack, runs reproducible calculations, and builds a cited brief. Reviewers can correct it and accept process rules for the next run.</p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link href="/projects/atlas" className="inline-flex items-center justify-center rounded-full bg-[#cfc1ff] px-5 py-3 text-sm font-bold text-[#171326] transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">Open Atlas →</Link>
                   <Link href="/projects" className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white hover:text-[#171326] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">Project details →</Link>

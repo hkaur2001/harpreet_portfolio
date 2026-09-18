@@ -3,6 +3,7 @@ import http from "node:http";
 const counters = new Map();
 
 function kindFor(path, body) {
+  if (String(body?.instructions || "").includes("Atlas Financial Research Desk")) return "atlas-desk";
   if (String(body?.instructions || "").includes("You are Atlas")) return "atlas";
   if (path.endsWith("/embeddings")) return "embeddings";
   const input = String(body?.input ?? "");
@@ -79,6 +80,29 @@ const server = http.createServer(async (req, res) => {
   if ((req.url || "").endsWith("/embeddings")) {
     const inputs = Array.isArray(body.input) ? body.input : [String(body.input ?? "")];
     payload = { data: inputs.map((text, index) => ({ index, embedding: vector(String(text)) })), usage: { total_tokens: inputs.length * 12 } };
+  } else if (kind === "atlas-desk") {
+    const request = JSON.parse(body.input[0].content);
+    const marker = request.question;
+    if (marker.includes("DESK_TEST_OUTAGE")) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: { message: "Synthetic provider outage" } })); return;
+    }
+    const observations = body.input.filter(i => i.type === "function_call_output").map(i => JSON.parse(i.output).observation);
+    const required = { earnings: ["revenue_growth", "ebitda_margin", "document_conflict"], credit: ["leverage", "leverage_stress", "document_conflict"], reconciliation: ["cash_conversion", "revenue_growth", "document_conflict"] }[request.task];
+    const call = (name, args, id) => ({ type: "function_call", name, arguments: JSON.stringify(args), call_id: id });
+    if (body.text?.format?.name === "atlas_research_brief") {
+      const metrics = observations.filter(i => required.includes(i.id) && typeof i.value === "number");
+      const brief = { title: "Aster Data Systems — analyst handoff", summary: "Synthetic evidence reconciled against approved H1 figures. Analyst and reviewer verification required before distribution.", findings: metrics.map(m => ({ metricId: m.id, value: m.value, unit: m.unit, conclusion: `${m.id}: ${m.value} ${m.unit}. Approved financials govern; the preliminary revenue version is superseded.`, sourceIds: m.sourceIds, caveat: m.caveat })), openQuestions: ["Validate contractual TTM adjustments before a covenant decision.", "Identify the accountable reviewer and baseline cycle time."], pilot: { owner: "Research operations lead and financial-data reviewer", scope: "Read-only financial brief for one synthetic issuer; no rating, trade, or external distribution.", launchGates: ["No unauthorized source content", "Required numeric fields match reproducible calculations", "Every released brief reviewed by a named analyst"], successMetrics: ["Baseline versus assisted cycle time including review", "Reviewer correction and rework rate"], nextExperiment: "Replay approved versus superseded source conflicts in shadow mode." }, proposedRule: "Prefer approved current source versions; preserve period and methodology; escalate missing contractual definitions to the reviewer.", revisionSummary: request.reviewerFeedback ? "Reviewer feedback addressed: " + request.reviewerFeedback : "Initial investigation." };
+      if (marker.includes("DESK_TEST_BAD_CITATION")) brief.findings[0].sourceIds = ["R01"];
+      if (marker.includes("DESK_TEST_BAD_VALUE")) brief.findings[0].value = 666;
+      payload = responseText(JSON.stringify(brief));
+    } else if (!observations.length || marker.includes("DESK_TEST_MISSING_POLICY")) {
+      const ids = ["F02", "F03", "F04", "F05", "F06"].filter(id => !marker.includes("DESK_TEST_MISSING_POLICY") || id !== "F06");
+      const calls = ids.map((id, index) => call("read_source", { source_id: id }, `desk-read-${index}-${observations.length}`));
+      if (marker.includes("DESK_TEST_ACCESS_PROBE")) calls.push(call("read_source", { source_id: "R01" }, "desk-denied"));
+      if (marker.includes("DESK_TEST_UNAUTHORIZED_TOOL")) calls.push(call("send_report", { destination: "https://example.invalid" }, "desk-unsafe"));
+      payload = { output: calls, usage: { input_tokens: 90, output_tokens: 60 } };
+    } else payload = { output: required.map((id, index) => call("calculate_metric", { metric_id: id }, `desk-metric-${index}`)), usage: { input_tokens: 110, output_tokens: 65 } };
   } else if (kind === "atlas") {
     const briefText = JSON.stringify(body.input || []);
     if (briefText.includes("ATLAS_TEST_PROVIDER_FAILURE")) {

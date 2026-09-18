@@ -10,7 +10,7 @@ test.describe("Atlas live deployment agent", () => {
   });
 
   test("goal is clear and short briefs fail before model invocation", async ({ page }) => {
-    await page.goto("/projects/atlas");
+    await page.goto("/projects/atlas/strategy");
     await expect(page.getByRole("heading", { name: /Find the right first AI pilot/i })).toBeVisible();
     await page.getByTestId("atlas-brief").fill("too short");
     await page.getByTestId("run-agent").click();
@@ -18,7 +18,7 @@ test.describe("Atlas live deployment agent", () => {
   });
 
   test("real API tool loop returns evidence-backed plan and human review", async ({ page }) => {
-    await page.goto("/projects/atlas");
+    await page.goto("/projects/atlas/strategy");
     await page.getByTestId("run-agent").click();
     await expect(page.getByTestId("atlas-plan")).toBeVisible({ timeout: 40_000 });
     await expect(page.getByTestId("recommendation-title")).toHaveText("Diligence evidence synthesis");
@@ -31,7 +31,7 @@ test.describe("Atlas live deployment agent", () => {
   });
 
   test("extreme controls and all verticals remain usable", async ({ page }) => {
-    await page.goto("/projects/atlas");
+    await page.goto("/projects/atlas/strategy");
     await page.locator("summary").filter({ hasText: "Deployment constraints" }).click();
     await page.getByTestId("risk-slider").fill("0");
     await page.getByTestId("capacity-slider").fill("1");

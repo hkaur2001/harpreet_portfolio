@@ -21,7 +21,7 @@ function assert(condition, message) {
 }
 
 async function waitForDeployment() {
-  const deadline = Date.now() + 6 * 60_000;
+  const deadline = Date.now() + 10 * 60_000;
   let last = null;
   while (Date.now() < deadline) {
     try {
@@ -52,6 +52,7 @@ async function testPages() {
     "/",
     "/projects",
     "/projects/atlas",
+    "/projects/atlas/strategy",
     "/security",
     "/projects/fieldguide",
     "/projects/sentinel",
@@ -77,12 +78,28 @@ async function testPages() {
   assert(home?.text.includes("Atlas"), "Homepage does not visibly contain Atlas.");
   assert(home?.text.includes("/projects/atlas"), "Homepage does not link to the native Atlas project.");
   assert(projects?.text.includes("/projects/atlas"), "Projects index does not link to the native Atlas project.");
-  assert(atlas?.text.includes("AI Deployment Command Center"), "Atlas page did not render its project identity.");
+  assert(atlas?.text.includes("Financial Research Desk"), "Atlas page did not render its project identity.");
   assert(home?.text.includes("FieldGuide"), "Homepage does not visibly contain FieldGuide.");
   assert(projects?.text.includes("FieldGuide"), "Projects index does not visibly contain FieldGuide.");
   assert(projects?.text.includes("/projects/fieldguide"), "Projects index does not link to FieldGuide.");
   assert(fieldGuide?.text.includes("Enterprise AI Deployment Workbench"), "FieldGuide page did not render its project identity.");
   console.log(`✓ ${pages.length} public product/project pages rendered; Atlas and FieldGuide are visible and internally linked`);
+}
+
+async function testAtlasDesk() {
+  const result = await request("/api/atlas/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task: "credit", question: "Assess the synthetic issuer's leverage proxy and 20% EBITDA downside. Reconcile draft and approved revenue, and identify unknowns before a real covenant decision.", reviewerFeedback: "", approvedRules: [] }) }, [200], 65_000);
+  const desk = result.json;
+  assert(desk.mode === "live" && desk.telemetry.modelCalls >= 2, "Atlas did not run a live investigation.");
+  assert(["F02", "F04", "F06"].every(id => desk.sources.some(s => s.id === id)), "Atlas omitted mandatory evidence.");
+  for (const [id, expected] of [["leverage", 35 / 12], ["leverage_stress", 175 / 48], ["document_conflict", 30]]) {
+    const metric = desk.calculations.find(c => c.id === id);
+    const finding = desk.brief.findings.find(f => f.metricId === id);
+    assert(metric && finding && Math.abs(metric.value - expected) < 1e-6 && Math.abs(finding.value - expected) < 1e-6, `Atlas ${id} did not match the golden calculation.`);
+    assert(finding.sourceIds.every(source => desk.sources.some(s => s.id === source)), "Atlas invented a source reference.");
+  }
+  assert(desk.checks.every(c => c.passed), "Atlas structural gates failed.");
+  await request("/api/atlas/evidence?id=R01", {}, [404], 20_000);
+  console.log(`✓ Atlas live credit investigation: ${desk.telemetry.modelCalls} model calls, ${desk.telemetry.toolCalls} tools, golden numeric fields and actual-source citations; unavailable evidence denied`);
 }
 
 async function testEnough() {
@@ -277,6 +294,7 @@ async function main() {
   console.log(`Production smoke target: ${base}`);
   await waitForDeployment();
   await testPages();
+  await testAtlasDesk();
   await testEnough();
   await testFieldGuide();
   await testVoiceprint();
