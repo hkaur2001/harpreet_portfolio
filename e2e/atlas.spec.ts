@@ -14,7 +14,7 @@ test.describe("Atlas live deployment agent", () => {
     await expect(page.getByRole("heading", { name: /Find the right first AI pilot/i })).toBeVisible();
     await page.getByTestId("atlas-brief").fill("too short");
     await page.getByTestId("run-agent").click();
-    await expect(page.getByRole("alert")).toContainText("40–4,000");
+    await expect(page.getByRole("alert").filter({ hasText: "Describe the workflow" })).toContainText("40–4,000");
   });
 
   test("real API tool loop returns evidence-backed plan and human review", async ({ page }) => {

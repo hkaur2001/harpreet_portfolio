@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { runAtlasAgent, type AtlasInput } from "@/lib/atlas/agent";
 import { verticals } from "@/lib/atlas/scenarios";
 import { guardPublicJsonPost } from "@/lib/request-security";
+import { UpstreamRequestError } from "@/lib/resilient-fetch";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -17,7 +18,17 @@ export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "Atlas's live agent is not configured. No simulated recommendation was substituted." }, { status: 503 });
   try {
     return NextResponse.json(await runAtlasAgent(input), { headers: { "Cache-Control": "no-store" } });
-  } catch {
-    return NextResponse.json({ error: "The agent could not complete an evidence-backed plan within its limits. Please retry or simplify the brief. No unsupported recommendation was returned." }, { status: 502, headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    const diagnostics = new Map([
+      ["Agent did not gather comparison evidence.", "COMPARISON_INCOMPLETE"],
+      ["Recommendation did not pass its evidence and control boundary.", "CONTROL_EVIDENCE_INCOMPLETE"],
+      ["Agent reached its time budget.", "TIME_BUDGET"],
+      ["Agent cited unverified evidence.", "CITATION_INVALID"],
+      ["Invalid rollout phases.", "PHASES_INVALID"],
+      ["Invalid agent result.", "PLAN_INVALID"],
+      ["Agent omitted required deployment uncertainty.", "UNCERTAINTY_MISSING"],
+    ]);
+    const code = error instanceof UpstreamRequestError ? `PROVIDER_${error.status}` : error instanceof Error ? diagnostics.get(error.message) ?? (error.name === "TimeoutError" ? "PROVIDER_TIMEOUT" : error instanceof SyntaxError ? "PLAN_PARSE_FAILED" : "AGENT_FAILED") : "AGENT_FAILED";
+    return NextResponse.json({ error: "The agent could not complete an evidence-backed plan within its limits. Please retry or simplify the brief. No unsupported recommendation was returned.", code }, { status: 502, headers: { "Cache-Control": "no-store" } });
   }
 }
