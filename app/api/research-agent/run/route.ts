@@ -9,6 +9,7 @@ export const maxDuration = 60;
 type Source = { title: string; url: string; sourceType: string };
 type Judge = { relevance: number; synthesis: number; actionability: number; sourceDiversity: number; citationCoverage: number; notes: string };
 type ResponseBody = { output?: Array<{ type?: string; action?: { sources?: Array<{ title?: string; url?: string }> }; content?: Array<{ type?: string; text?: string; annotations?: Array<{ type?: string; title?: string; url?: string }> }> }> };
+const SEARCH_MODEL = "gpt-5.5";
 
 function responseText(body: unknown) {
   const response = body as ResponseBody;
@@ -41,7 +42,7 @@ async function research(apiKey: string, goal: string, topics: string) {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-5.6-luna",
+      model: SEARCH_MODEL,
       reasoning: { effort: "low" },
       store: false,
       max_output_tokens: 1500,
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
         if (liveDigest) {
           digest = liveDigest;
           sources = extractSources(result.data);
-          model = "gpt-5.6-luna";
+          model = SEARCH_MODEL;
           searchTool = "OpenAI web search";
         } else {
           degraded = true;
@@ -150,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     let evaluation = deterministicJudge(digest, sources);
     let judgeMode = "deterministic fallback";
-    if (model === "gpt-5.6-luna") {
+    if (model === SEARCH_MODEL) {
       const prompt = judgePrompt(goal, digest, sources);
       if (huggingFaceConfigured()) {
         try {
