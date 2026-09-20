@@ -87,7 +87,15 @@ async function testPages() {
 }
 
 async function testAtlasDesk() {
-  const result = await request("/api/atlas/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task: "credit", question: "Assess the synthetic issuer's leverage proxy and 20% EBITDA downside. Reconcile draft and approved revenue, and identify unknowns before a real covenant decision.", reviewerFeedback: "", approvedRules: [] }) }, [200], 65_000);
+  let result;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    result = await request("/api/atlas/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task: "credit", question: "Assess the synthetic issuer's leverage proxy and 20% EBITDA downside. Reconcile draft and approved revenue, and identify unknowns before a real covenant decision.", reviewerFeedback: "", approvedRules: [] }) }, [200, 502], 65_000);
+    if (result.response.status === 200) break;
+    assert(result.json?.code === "PROVIDER_429", `Atlas investigation failed unexpectedly: ${result.text.slice(0, 200)}`);
+    if (attempt === 3) throw new Error("Atlas provider remained rate-limited after four bounded attempts; live agent validation could not pass.");
+    console.log("↳ Atlas provider rate-limited; retrying the live investigation after 12 seconds");
+    await sleep(12_000);
+  }
   const desk = result.json;
   assert(desk.mode === "live" && desk.telemetry.modelCalls >= 2, "Atlas did not run a live investigation.");
   assert(["F02", "F04", "F06"].every(id => desk.sources.some(s => s.id === id)), "Atlas omitted mandatory evidence.");
