@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { guardPublicJsonPost } from "@/lib/request-security";
-import { fetchJsonWithRetry, openAiUrl } from "@/lib/resilient-fetch";
+import { fetchJsonWithRetry, openAiUrl, UpstreamRequestError } from "@/lib/resilient-fetch";
 import { huggingFaceChat, huggingFaceConfigured } from "@/lib/huggingface-provider";
 
 export const runtime = "nodejs";
@@ -140,9 +140,10 @@ export async function POST(request: NextRequest) {
           degraded = true;
           degradedReasons.push("The research provider returned no usable digest, so the system refused to invent current-web claims.");
         }
-      } catch {
+      } catch (error) {
         degraded = true;
-        degradedReasons.push("The live research provider was rate-limited or unavailable after retries. The request completed in a no-fabrication fallback mode.");
+        const category = error instanceof UpstreamRequestError ? `HTTP ${error.status}` : "network/timeout";
+        degradedReasons.push(`The live research provider was unavailable (${category}). The request completed without inventing current-web claims.`);
       }
     } else {
       degraded = true;
