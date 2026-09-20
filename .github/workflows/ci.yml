@@ -35,6 +35,7 @@ jobs:
           curl -fsS http://127.0.0.1:3000/api/sentinel/health >/dev/null || (cat /tmp/portfolio-next.log && exit 1)
           FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:fieldguide:e2e
           FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:atlas:e2e
+          FIELDGUIDE_BASE_URL=http://127.0.0.1:3000 npm run test:portfolio:e2e
           npm run test:atlas:contracts
           npm run test:atlas:desk:contracts
           EXPECT_PROVIDER_RETRIES=1 npm run stress:http

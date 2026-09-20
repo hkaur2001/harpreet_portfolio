@@ -6,7 +6,7 @@ const toolkit = [
   {
     area: "Deployment strategy + enterprise adoption",
     tools: ["Workflow mapping", "Use-case sequencing", "Stakeholder discovery", "Pilot design", "Golden sets", "Rollout gates", "Human approval", "Deployment perimeters"],
-    proof: "Atlas: deployment framing → risk visibility → governed decisions → measurable adoption",
+    proof: "Atlas: source-backed analyst work → reviewer correction → measurable first pilot",
   },
   {
     area: "Product management + strategy",
@@ -78,22 +78,22 @@ export default function Home() {
               <div>
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-[#cfc1ff] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] text-[#171326]">Featured</span>
-                  <span className="rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/75">Enterprise AI deployment</span>
+                  <span className="rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/75">Financial research agent</span>
                 </div>
                 <h2 className="mt-6 max-w-3xl text-balance text-4xl font-semibold tracking-[-0.05em] md:text-6xl">Atlas turns conflicting financial evidence into a brief you can defend.</h2>
                 <p className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-[#cfc1ff]">What it does</p>
                 <p className="mt-2 max-w-2xl text-base leading-7 text-white/70">Choose earnings, credit watch, or data reconciliation. A live agent inspects a synthetic evidence pack, runs reproducible calculations, and builds a cited brief. Reviewers can correct it and accept process rules for the next run.</p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link href="/projects/atlas" className="inline-flex items-center justify-center rounded-full bg-[#cfc1ff] px-5 py-3 text-sm font-bold text-[#171326] transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">Open Atlas →</Link>
-                  <Link href="/projects" className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white hover:text-[#171326] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">Project details →</Link>
+                  <Link href="/projects/atlas/strategy" className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white hover:text-[#171326] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">Deployment strategy →</Link>
                 </div>
               </div>
               <div className="grid gap-px overflow-hidden rounded-2xl border border-white/15 bg-white/15 sm:grid-cols-2">
                 {[
-                  ["01", "Frame", "Define outcomes, constraints, owners, and success measures."],
-                  ["02", "Expose", "Surface risk, dependencies, evidence, and accountability."],
-                  ["03", "Govern", "Use readiness signals and approvals for consequential decisions."],
-                  ["04", "Advance", "Convert the current state into measurable next actions."],
+                  ["01", "Investigate", "The agent selects authorized financial sources."],
+                  ["02", "Reconcile", "Server calculations expose conflicting versions and assumptions."],
+                  ["03", "Review", "Analysts inspect citations, correct drafts, and accept process rules."],
+                  ["04", "Pilot", "Launch gates and time budgets make the first deployment measurable."],
                 ].map(([number, title, body]) => (
                   <div key={number} className="bg-[#211b35] p-5">
                     <span className="font-mono text-xs text-[#cfc1ff]">{number}</span>
@@ -134,8 +134,8 @@ export default function Home() {
 
       <section id="experience" className="border-b border-[var(--line)]">
         <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-          <SectionHeading eyebrow="Production experience" title="Enterprise engineering at S&P Global." body="The public projects show what I can explain openly. My professional work adds the harder context: real integrations, permissions, reliability, organizational scale, and delivery across technical and business teams." />
-          <div className="mt-12">{experienceHighlights.map((x) => <article key={x.company} className="grid gap-8 rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 md:grid-cols-[0.55fr_1.45fr] md:p-9"><div><p className="text-2xl font-semibold tracking-[-0.03em]">{x.company}</p><p className="mt-2 text-sm text-[var(--muted)]">{x.role}</p></div><div><p className="max-w-3xl text-lg leading-8">{x.body}</p><div className="mt-7 grid gap-3">{x.bullets.map((b) => <div key={b} className="flex gap-4 border-t border-[var(--line)] pt-4 text-sm leading-6 text-[var(--muted)]"><span className="font-mono text-[var(--signal)]">↳</span><p>{b}</p></div>)}</div></div></article>)}<div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-6 py-4 text-sm"><strong>Princeton University</strong> · B.S.E. Computer Science</div></div>
+          <SectionHeading eyebrow="Production experience" title="Enterprise engineering, from integration to adoption." body="The public projects show what I can explain openly. My professional work adds the harder context: real integrations, permissions, reliability, organizational scale, and delivery across technical and business teams." />
+          <div className="mt-12">{experienceHighlights.map((x) => <article key={x.company} className="grid gap-8 rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 md:grid-cols-[0.55fr_1.45fr] md:p-9"><div><p className="text-2xl font-semibold tracking-[-0.03em]">{x.company}</p><p className="mt-2 text-sm text-[var(--muted)]">{x.role}</p></div><div><p className="max-w-3xl text-lg leading-8">{x.body}</p><div className="mt-7 grid gap-3">{x.bullets.map((b) => <div key={b} className="flex gap-4 border-t border-[var(--line)] pt-4 text-sm leading-6 text-[var(--muted)]"><span className="font-mono text-[var(--signal)]">↳</span><p>{b}</p></div>)}</div><p className="mt-6 text-sm text-[var(--muted)]">Employer details and a résumé are available on request. <a className="font-semibold text-[var(--ink)] underline underline-offset-4" href={`mailto:${site.email}?subject=Resume%20request`}>Request résumé ↗</a></p></div></article>)}<div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-6 py-4 text-sm"><strong>Princeton University</strong> · B.S.E. Computer Science</div></div>
         </div>
       </section>
 

@@ -93,7 +93,7 @@ export default function ProjectsPage() {
   return (
     <main>
       <section className="grid-field border-b border-[var(--line)]">
-        <div className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-20">
+        <div className="mx-auto max-w-7xl px-5 py-12 md:px-8 md:py-14">
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Selected projects</p>
           <h1 className="mt-5 max-w-5xl text-balance text-5xl font-semibold tracking-[-0.05em] md:text-7xl">Selected systems, built end to end.</h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">Start with the problem and open any project for the working experience. Expand the architecture panel for decisions, workflow, and technical depth.</p>

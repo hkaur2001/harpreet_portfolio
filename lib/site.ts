@@ -56,9 +56,9 @@ export const principles = [
 
 export const experienceHighlights = [
   {
-    company: "S&P Global",
+    company: "Enterprise AI platform",
     role: "Software & Platform Engineer · AI systems",
-    body: "Built and productionized enterprise AI and data infrastructure around Spark Assist, connecting live knowledge and workflow systems while partnering across engineering, IT, security, and business teams.",
+    body: "Built and productionized enterprise AI and data infrastructure, connecting knowledge and workflow systems while partnering across engineering, IT, security, and business teams.",
     bullets: [
       "Owned integration patterns spanning 8+ enterprise systems and more than 500K knowledge assets.",
       "Built reusable onboarding, routing, validation, monitoring, and failure-recovery patterns for enterprise knowledge pipelines.",
