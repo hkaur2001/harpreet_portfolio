@@ -15,12 +15,13 @@ export async function POST(request: Request) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return NextResponse.json({ error: "Provide a JSON object." }, { status: 400 });
   const input = raw as DeskInput;
   if (typeof input.task !== "string" || !Object.hasOwn(deskTasks, input.task) || typeof input.question !== "string" || input.question.trim().length < 10 || input.question.length > 2000 || typeof input.reviewerFeedback !== "string" || input.reviewerFeedback.length > 2000 || !Array.isArray(input.approvedRules) || input.approvedRules.length > 6 || input.approvedRules.some(r => typeof r !== "string" || r.length > 1000)) return NextResponse.json({ error: "Choose a task, enter a 10–2,000 character question, and use at most six bounded review rules." }, { status: 400 });
-  if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "The live research agent is not configured. No scripted brief was substituted." }, { status: 503 });
+  if (!process.env.OPENAI_API_KEY && !huggingFaceConfigured()) return NextResponse.json({ error: "The live research agent is not configured. No scripted brief was substituted." }, { status: 503 });
   try {
     try {
-      return NextResponse.json(await runDeskAgent(input), { headers: { "Cache-Control": "no-store" } });
+      if (process.env.OPENAI_API_KEY) return NextResponse.json(await runDeskAgent(input), { headers: { "Cache-Control": "no-store" } });
+      return NextResponse.json(await runDeskHfAgent(input, Date.now()), { headers: { "Cache-Control": "no-store" } });
     } catch (error) {
-      if (!(error instanceof UpstreamRequestError && error.status === 429 && huggingFaceConfigured())) throw error;
+      if (!(error instanceof UpstreamRequestError && [402, 429, 500, 502, 503].includes(error.status) && huggingFaceConfigured())) throw error;
       return NextResponse.json(await runDeskHfAgent(input, Date.now()), { headers: { "Cache-Control": "no-store" } });
     }
   }
