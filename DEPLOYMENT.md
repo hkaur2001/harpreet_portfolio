@@ -23,6 +23,10 @@ Required only for Sentinel's **Live OpenAI** investigation mode.
 
 The public UI only receives a boolean indicating whether live mode is configured. The key itself remains on the server.
 
+### Vercel AI Gateway
+
+Atlas prefers Vercel AI Gateway in production and uses direct OpenAI and hosted Hugging Face inference as bounded live fallbacks. Vercel supplies `VERCEL_OIDC_TOKEN` automatically when AI Gateway is enabled for the linked project. For non-Vercel deployments, configure `AI_GATEWAY_API_KEY` instead. These values must remain server-only.
+
 Because the live demo can incur provider charges, configure provider-side project budgets/alerts. The application also applies a bounded tool loop, max output tokens, deterministic fallback, and a best-effort public-request throttle.
 
 ### `NEXT_PUBLIC_SITE_URL`

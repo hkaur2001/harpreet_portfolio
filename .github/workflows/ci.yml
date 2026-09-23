@@ -25,7 +25,7 @@ jobs:
         run: |
           node scripts/mock-openai.mjs >/tmp/mock-openai.log 2>&1 &
           MOCK_PID=$!
-          OPENAI_API_KEY=ci-test-key OPENAI_BASE_URL=http://127.0.0.1:8787/v1 npm run start -- -H 127.0.0.1 -p 3000 >/tmp/portfolio-next.log 2>&1 &
+          AI_GATEWAY_API_KEY=ci-gateway-key AI_GATEWAY_BASE_URL=http://127.0.0.1:8787/v1 OPENAI_API_KEY=ci-test-key OPENAI_BASE_URL=http://127.0.0.1:8787/v1 npm run start -- -H 127.0.0.1 -p 3000 >/tmp/portfolio-next.log 2>&1 &
           APP_PID=$!
           trap 'kill $APP_PID $MOCK_PID 2>/dev/null || true' EXIT
           for i in {1..30}; do

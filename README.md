@@ -108,6 +108,8 @@ The application works with an OpenAI server-side key:
 OPENAI_API_KEY=...
 ```
 
+Atlas also supports Vercel AI Gateway as its first production inference route. Vercel deployments use the automatically refreshed `VERCEL_OIDC_TOKEN`; non-Vercel environments can set `AI_GATEWAY_API_KEY`. The gateway request uses the same bounded tool loop, server-side source authorization, arithmetic, citation checks, and human-review boundary as the direct provider route.
+
 Voiceprint's semantic retrieval does **not** require an embedding API key because embeddings execute locally in the browser.
 
 An optional Hugging Face fine-grained token with Inference Providers permission enables hosted open-model routes when the Hugging Face account/provider has inference quota available:
@@ -116,7 +118,7 @@ An optional Hugging Face fine-grained token with Inference Providers permission 
 HF_TOKEN=...
 ```
 
-Hosted Hugging Face inference is deliberately not a hard dependency. Provider credits and model availability can change independently of the application, so public workflows preserve a validated OpenAI or deterministic fallback path. `HF_TOKEN` is server-only; never expose provider secrets through `NEXT_PUBLIC_*` environment variables or client bundles.
+Hosted Hugging Face inference is an independent live fallback for Atlas and an optional challenger/judge elsewhere. Provider credits and model availability can change independently of the application. Atlas fails closed if every live inference route is unavailable; it never substitutes a prewritten financial brief. `HF_TOKEN`, gateway credentials, and provider keys are server-only; never expose them through `NEXT_PUBLIC_*` environment variables or client bundles.
 
 Safe provider configuration can be inspected through:
 

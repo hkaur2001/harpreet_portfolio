@@ -7,12 +7,14 @@ export type RetryResult<T> = {
 export class UpstreamRequestError extends Error {
   status: number;
   retryable: boolean;
+  retryAfterMs: number | null;
 
-  constructor(message: string, status: number, retryable: boolean) {
+  constructor(message: string, status: number, retryable: boolean, retryAfterMs: number | null = null) {
     super(message);
     this.name = "UpstreamRequestError";
     this.status = status;
     this.retryable = retryable;
+    this.retryAfterMs = retryAfterMs;
   }
 }
 
@@ -54,11 +56,11 @@ export async function fetchJsonWithRetry<T>(
       }
 
       const canRetry = retryable(response.status);
+      const headerDelay = retryAfterMs(response);
       if (!canRetry || attempt === attempts - 1) {
-        throw new UpstreamRequestError(`Upstream request failed (${response.status}).`, response.status, canRetry);
+        throw new UpstreamRequestError(`Upstream request failed (${response.status}).`, response.status, canRetry, headerDelay);
       }
 
-      const headerDelay = retryAfterMs(response);
       const exponential = Math.min(maxDelayMs, baseDelayMs * (2 ** attempt));
       const jitter = Math.floor(Math.random() * Math.max(20, exponential * 0.2));
       await sleep(Math.min(maxDelayMs, headerDelay ?? exponential + jitter));

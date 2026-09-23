@@ -31,12 +31,11 @@ async function waitForDeployment() {
       if (
         result.json?.status === "ok" &&
         revisionMatches &&
-        result.json?.openAIConfigured === true &&
-        result.json?.huggingFaceConfigured === true &&
+        [result.json?.aiGatewayConfigured, result.json?.openAIConfigured, result.json?.huggingFaceConfigured].some(Boolean) &&
         result.json?.localEmbeddings?.remoteEmbeddingApiRequired === false
       ) {
         console.log(`✓ production deployment ready: ${result.json.deploymentCommit || "revision unavailable"}`);
-        console.log("✓ OpenAI + HF_TOKEN configured; browser-local Hugging Face embeddings enabled");
+        console.log(`✓ live model routes configured: gateway=${Boolean(result.json.aiGatewayConfigured)}, OpenAI=${Boolean(result.json.openAIConfigured)}, Hugging Face=${Boolean(result.json.huggingFaceConfigured)}; browser-local embeddings enabled`);
         return result.json;
       }
     } catch (error) {

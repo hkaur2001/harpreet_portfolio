@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { HUGGING_FACE_MODELS } from "@/lib/huggingface-provider";
+import { aiGatewayConfigured } from "@/lib/atlas/desk-gateway-agent";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,7 @@ export async function GET() {
     deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
     deploymentEnvironment: process.env.VERCEL_ENV ?? null,
     openAIConfigured: Boolean(process.env.OPENAI_API_KEY),
+    aiGatewayConfigured: aiGatewayConfigured(),
     huggingFaceConfigured: Boolean(process.env.HF_TOKEN),
     localEmbeddings: {
       runtime: "Hugging Face Transformers.js",
