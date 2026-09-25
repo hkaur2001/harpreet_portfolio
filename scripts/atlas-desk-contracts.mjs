@@ -23,6 +23,8 @@ for (const body of [null, [], "{broken"]) await post(body, 400);
 await post(valid, 415, { headers: { "content-type": "text/plain" } });
 await post("x".repeat(16001), 413);
 for (const marker of ["BAD_VALUE", "BAD_UNIT", "BAD_JSON", "BAD_CITATION", "UNAUTHORIZED_TOOL", "MISSING_POLICY", "NO_TOOLS", "OUTAGE"]) await post({ ...valid, question: `DESK_TEST_${marker} inspect the synthetic financial evidence.` }, 502);
+const billing = await post({ ...valid, question: "DESK_TEST_BILLING inspect the synthetic financial evidence." }, 502);
+assert.equal(billing.code, "PROVIDER_402"); assert.match(billing.error, /billing or quota/i); checks += 2;
 const repaired = await post({ ...valid, question: "DESK_TEST_EARLY_CALC inspect synthetic financial data." });
 assert(repaired.trace.some(t => t.detail.includes("prerequisites requested"))); assert.equal(repaired.telemetry.modelCalls, 4); checks += 2;
 const denied = await post({ ...valid, question: "DESK_TEST_ACCESS_PROBE inspect financial data." });
