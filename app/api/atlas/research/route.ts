@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const started = Date.now();
   const providers: Array<() => Promise<ReturnType<typeof NextResponse.json>>> = [];
   if (aiGatewayConfigured()) providers.push(async () => NextResponse.json(await runDeskGatewayAgent(input, started), { headers: { "Cache-Control": "no-store" } }));
-  if (process.env.OPENAI_API_KEY) providers.push(async () => NextResponse.json(await runDeskAgent(input, { apiKey: process.env.OPENAI_API_KEY!, endpoint: `${(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "")}/responses`, model: process.env.ATLAS_MODEL || "gpt-5.6-luna", startedAt: started }), { headers: { "Cache-Control": "no-store" } }));
+  if (process.env.OPENAI_API_KEY) providers.push(async () => NextResponse.json(await runDeskAgent(input, { apiKey: process.env.OPENAI_API_KEY!, endpoint: `${(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "")}/responses`, model: process.env.ATLAS_MODEL || "gpt-5.6-luna", startedAt: started, retryRateLimits: false }), { headers: { "Cache-Control": "no-store" } }));
   if (huggingFaceConfigured()) providers.push(async () => NextResponse.json(await runDeskHfAgent(input, started), { headers: { "Cache-Control": "no-store" } }));
   try {
     let lastError: unknown = new Error("NOT_CONFIGURED");

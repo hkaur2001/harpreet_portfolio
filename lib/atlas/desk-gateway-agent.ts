@@ -21,5 +21,7 @@ export function runDeskGatewayAgent(input: DeskInput, startedAt: number): Promis
     model,
     displayModel: `${model} · Vercel AI Gateway`,
     startedAt,
+    budgetMs: process.env.OPENAI_API_KEY ? 28_000 : 55_000,
+    retryRateLimits: false,
   });
 }

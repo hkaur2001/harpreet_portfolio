@@ -243,6 +243,15 @@ async function testVoiceprint() {
 }
 
 async function testKnowledge() {
+  const question = "What does the Q3 pricing playbook say about discount exceptions?";
+  const denied = await request("/api/knowledge/query", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, persona: "employee" }) }, [200], 60_000);
+  assert(denied.json?.sources?.length === 0 && /do not have an authorized source/i.test(denied.json?.answer || ""), "Secure Knowledge answered a restricted pricing question from irrelevant employee documents.");
+  for (const question of ["Who approves a pricing discount exception?", "What is the renewal exception approval process?"]) {
+    const denied = await request("/api/knowledge/query", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, persona: "employee" }) }, [200], 60_000);
+    assert(denied.json?.sources?.length === 0 && denied.json?.metrics?.model === "not called", `Secure Knowledge answered an unsupported restricted topic: ${question}`);
+  }
+  const authorized = await request("/api/knowledge/query", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, persona: "revenue" }) }, [200], 60_000);
+  assert(authorized.json?.sources?.some(s => s.id === "pricing-playbook"), "Revenue Enablement could not retrieve its authorized pricing source.");
   const result = await request("/api/knowledge/query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -252,7 +261,7 @@ async function testKnowledge() {
   assert(Array.isArray(result.json?.trace) && result.json.trace.length >= 4, "Secure Knowledge trace is incomplete.");
   assert(Array.isArray(result.json?.sources) && result.json.sources.length >= 1, "Secure Knowledge returned no evidence sources.");
   assert(result.json?.metrics?.model !== "not called", "Secure Knowledge never reached answer generation.");
-  console.log(`✓ Secure Knowledge model=${result.json.metrics.model}; retrieval=${result.json.metrics.retrievalMode}; degraded=${Boolean(result.json.metrics.degraded)}`);
+  console.log(`✓ Secure Knowledge allowed/denied pricing boundary; model=${result.json.metrics.model}; retrieval=${result.json.metrics.retrievalMode}; degraded=${Boolean(result.json.metrics.degraded)}`);
 }
 
 async function testResearch() {

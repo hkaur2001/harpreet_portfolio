@@ -28,13 +28,23 @@ export async function retrieveWithLocalHuggingFace(
 
   return new Promise<LocalRetrieval>((resolve, reject) => {
     const timeout = window.setTimeout(() => {
-      currentWorker.removeEventListener("message", handleMessage);
+      cleanup();
+      currentWorker.terminate();
+      worker = null;
       reject(new Error("Local embedding model did not finish in time."));
-    }, 90_000);
+    }, 35_000);
 
     function cleanup() {
       window.clearTimeout(timeout);
       currentWorker.removeEventListener("message", handleMessage);
+      currentWorker.removeEventListener("error", handleWorkerError);
+    }
+
+    function handleWorkerError() {
+      cleanup();
+      currentWorker.terminate();
+      worker = null;
+      reject(new Error("The browser could not load the local embedding model."));
     }
 
     function handleMessage(event: MessageEvent<WorkerMessage>) {
@@ -54,6 +64,7 @@ export async function retrieveWithLocalHuggingFace(
     }
 
     currentWorker.addEventListener("message", handleMessage);
+    currentWorker.addEventListener("error", handleWorkerError);
     currentWorker.postMessage({ id, brief, samples, topK: 4 });
   });
 }

@@ -53,7 +53,7 @@ export default function SecureKnowledgePage() {
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--signal)]">Design choice</p>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">Permissions are not a prompt instruction.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--muted)]">A prompt that says “do not reveal restricted data” is not an authorization system. The retrieval layer enforces the security boundary in code, before generation. The model is responsible for answering from authorized evidence; it is not responsible for deciding what the user is allowed to know.</p>
-            <div className="mt-7 flex flex-wrap gap-3"><Link href="/" className="btn-secondary">Back to selected projects</Link><a href="https://github.com/hkaur2001/harpreet_portfolio" target="_blank" rel="noreferrer" className="btn-secondary">Inspect source ↗</a></div>
+            <div className="mt-7 flex flex-wrap gap-3"><Link href="/projects" className="btn-secondary">Back to selected projects</Link><a href="https://github.com/hkaur2001/harpreet_portfolio" target="_blank" rel="noreferrer" className="btn-secondary">Inspect source ↗</a></div>
           </div>
         </div>
       </section>

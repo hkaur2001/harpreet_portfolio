@@ -4,6 +4,7 @@ import { verticals, type VerticalId } from "./scenarios";
 import type { AtlasAgentResult, AtlasPlan } from "./types";
 
 export type AtlasInput = { verticalId: VerticalId; brief: string; riskTolerance: number; capacity: number; strictGovernance: boolean };
+export type AtlasProvider = { apiKey: string; endpoint: string; model: string; displayModel?: string; startedAt?: number; budgetMs?: number; retryRateLimits?: boolean };
 type ModelItem = { type: string; name?: string; arguments?: string; call_id?: string; content?: { type: string; text?: string }[] };
 type ModelResponse = { output?: ModelItem[]; usage?: { input_tokens?: number; output_tokens?: number } };
 
@@ -58,11 +59,12 @@ function validatePlan(raw: unknown, trace: AtlasAgentResult["trace"]): AtlasPlan
   return plan;
 }
 
-export async function runAtlasAgent(input: AtlasInput): Promise<AtlasAgentResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
+export async function runAtlasAgent(input: AtlasInput, provider?: AtlasProvider): Promise<AtlasAgentResult> {
+  const apiKey = provider?.apiKey ?? process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("ATLAS_NOT_CONFIGURED");
-  const started = Date.now();
-  const model = process.env.ATLAS_MODEL || "gpt-5.6-luna";
+  const started = provider?.startedAt ?? Date.now();
+  const budgetMs = provider?.budgetMs ?? 55_000;
+  const model = provider?.model ?? process.env.ATLAS_MODEL ?? "gpt-5.6-luna";
   const messages: unknown[] = [{ role: "user", content: JSON.stringify({ industry: verticals[input.verticalId].label, brief: input.brief, deliveryFte: input.capacity, riskTolerance: input.riskTolerance, strictGovernance: input.strictGovernance }) }];
   const trace: AtlasAgentResult["trace"] = [];
   const inspected = new Set<number>();
@@ -71,23 +73,23 @@ export async function runAtlasAgent(input: AtlasInput): Promise<AtlasAgentResult
   let modelCalls = 0, inputTokens = 0, outputTokens = 0, providerRetries = 0;
 
   async function call(extra: Record<string, unknown>) {
-    if (Date.now() - started > 45_000) throw new Error("Agent reached its time budget.");
+    if (Date.now() - started > budgetMs - 2_000) throw new Error("Agent reached its time budget.");
     const request = {
       method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model, instructions, input: messages, reasoning: { effort: "low" }, max_output_tokens: 1800, store: false, ...extra }),
     };
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const remaining = 55_000 - (Date.now() - started);
+      const remaining = budgetMs - (Date.now() - started);
       if (remaining < 1_000) throw new Error("Agent reached its time budget.");
       try {
-        const result = await fetchJsonWithRetry<ModelResponse>(openAiUrl("responses"), request, { attempts: 1, timeoutMs: Math.min(15_000, remaining) });
+        const result = await fetchJsonWithRetry<ModelResponse>(provider?.endpoint ?? openAiUrl("responses"), request, { attempts: 1, timeoutMs: Math.min(15_000, remaining) });
         modelCalls += 1;
         inputTokens += result.data.usage?.input_tokens ?? 0; outputTokens += result.data.usage?.output_tokens ?? 0;
         return result.data;
       } catch (error) {
-        if (attempt === 2 || (error instanceof UpstreamRequestError && !error.retryable)) throw error;
+        if (attempt === 2 || (error instanceof UpstreamRequestError && (!error.retryable || (error.status === 429 && provider?.retryRateLimits === false)))) throw error;
         const delay = 1_000 * (2 ** attempt);
-        if (55_000 - (Date.now() - started) < delay + 1_000) throw error;
+        if (budgetMs - (Date.now() - started) < delay + 1_000) throw error;
         providerRetries += 1;
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -120,5 +122,5 @@ export async function runAtlasAgent(input: AtlasInput): Promise<AtlasAgentResult
   const text = (final.output ?? []).flatMap(item => item.content ?? []).filter(c => c.type === "output_text").map(c => c.text || "").join("");
   const plan = validatePlan(JSON.parse(text), trace);
   if (!inspected.has(plan.recommendedWorkflowIndex) || !controlled.has(plan.recommendedWorkflowIndex) || !capacityChecked.has(plan.recommendedWorkflowIndex)) throw new Error("Recommendation did not pass its evidence and control boundary.");
-  return { runId: crypto.randomUUID(), mode: "live", model, plan, trace, metrics: { modelCalls, toolCalls: trace.length, latencyMs: Date.now() - started, inputTokens, outputTokens, providerRetries } };
+  return { runId: crypto.randomUUID(), mode: "live", model: provider?.displayModel ?? model, plan, trace, metrics: { modelCalls, toolCalls: trace.length, latencyMs: Date.now() - started, inputTokens, outputTokens, providerRetries } };
 }

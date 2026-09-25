@@ -19,7 +19,10 @@ type FederalDocument = {
 type FederalResponse = { count?: number; results?: FederalDocument[] };
 
 async function getDocuments(): Promise<FederalResponse> {
-  const params = new URLSearchParams({ per_page: "12", order: "newest", "conditions[term]": "artificial intelligence" });
+  // Federal Register full-text search also matches documents whose visible
+  // summary is unrelated. Search a wider window and display only records a
+  // reviewer can identify as AI-related from their title or abstract.
+  const params = new URLSearchParams({ per_page: "100", order: "newest", "conditions[term]": "artificial intelligence" });
   const response = await fetch(`https://www.federalregister.gov/api/v1/documents.json?${params.toString()}`, {
     next: { revalidate: 3600 },
     headers: { "User-Agent": "harpreet-portfolio-policy-radar" },
@@ -32,6 +35,10 @@ function agencyName(doc: FederalDocument) {
   return doc.agencies?.map((agency) => agency.name).filter(Boolean).join(", ") || "Federal agency";
 }
 
+function visiblyAiRelated(doc: FederalDocument) {
+  return /\bartificial intelligence\b|\bmachine learning\b|\bgenerative AI\b|\bAI (?:system|model|tool|technology|application|use|policy|governance)\b/i.test(`${doc.title ?? ""} ${doc.abstract ?? ""}`);
+}
+
 export default async function PolicyRadarPage() {
   let data: FederalResponse = {};
   let error = "";
@@ -41,7 +48,7 @@ export default async function PolicyRadarPage() {
     error = err instanceof Error ? err.message : "Unable to load Federal Register data.";
   }
 
-  const results = data.results ?? [];
+  const results = (data.results ?? []).filter(visiblyAiRelated).slice(0, 12);
   const agencyCounts = results.reduce<Record<string, number>>((acc, doc) => {
     const agency = agencyName(doc);
     acc[agency] = (acc[agency] ?? 0) + 1;
@@ -85,8 +92,8 @@ export default async function PolicyRadarPage() {
         <div className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-20">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6"><p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Live query</p><p className="mt-4 text-2xl font-semibold">artificial intelligence</p><p className="mt-3 text-sm leading-6 text-[var(--muted)]">Newest-first Federal Register search, refreshed hourly.</p></div>
-            <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6"><p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Matching records</p><p className="mt-4 text-3xl font-semibold">{data.count?.toLocaleString() ?? "—"}</p><p className="mt-3 text-sm leading-6 text-[var(--muted)]">Total matches reported by the source API.</p></div>
-            <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6"><p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Current page</p><p className="mt-4 text-3xl font-semibold">{results.length}</p><p className="mt-3 text-sm leading-6 text-[var(--muted)]">Latest source records rendered below.</p></div>
+            <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6"><p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Broad search matches</p><p className="mt-4 text-3xl font-semibold">{data.count?.toLocaleString() ?? "—"}</p><p className="mt-3 text-sm leading-6 text-[var(--muted)]">The source searches full documents; this total is broader than the visible AI feed.</p></div>
+            <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6"><p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--muted)]">On-topic in latest 100</p><p className="mt-4 text-3xl font-semibold">{results.length}</p><p className="mt-3 text-sm leading-6 text-[var(--muted)]">Up to 12 records with AI terms in the visible title or abstract.</p></div>
           </div>
         </div>
       </section>
@@ -103,7 +110,7 @@ export default async function PolicyRadarPage() {
 
             <div>
               <div className="flex items-end justify-between gap-4"><div><p className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--signal)]">Live records</p><h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">Recent federal AI-related documents</h2></div><Link href="/" className="text-sm font-semibold underline underline-offset-4">Back home</Link></div>
-              {error ? <div className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6"><p className="font-semibold">The upstream source is unavailable right now.</p><p className="mt-2 text-sm text-[var(--muted)]">{error}</p></div> : <div className="mt-8 space-y-3">{results.map((doc) => <article key={doc.document_number ?? doc.html_url ?? doc.title} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><div className="flex flex-wrap gap-2 text-[11px] text-[var(--muted)]"><span>{doc.publication_date ?? "Date unavailable"}</span><span>·</span><span>{doc.type ?? "Document"}</span><span>·</span><span>{agencyName(doc)}</span></div><h3 className="mt-3 text-lg font-semibold leading-7">{doc.title ?? "Untitled document"}</h3>{doc.abstract && <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--muted)]">{doc.abstract}</p>}{doc.html_url && <a className="mt-4 inline-flex text-sm font-semibold underline underline-offset-4" href={doc.html_url} target="_blank" rel="noreferrer">Open primary source ↗</a>}</article>)}</div>}
+              {error ? <div className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6"><p className="font-semibold">The upstream source is unavailable right now.</p><p className="mt-2 text-sm text-[var(--muted)]">{error}</p></div> : results.length === 0 ? <p className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 text-sm">No visibly AI-related titles or abstracts appeared in the latest 100 broad search matches. Check the primary source for a wider search.</p> : <div className="mt-8 space-y-3">{results.map((doc) => <article key={doc.document_number ?? doc.html_url ?? doc.title} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><div className="flex flex-wrap gap-2 text-[11px] text-[var(--muted)]"><span>{doc.publication_date ?? "Date unavailable"}</span><span>·</span><span>{doc.type ?? "Document"}</span><span>·</span><span>{agencyName(doc)}</span></div><h3 className="mt-3 text-lg font-semibold leading-7">{doc.title ?? "Untitled document"}</h3>{doc.abstract && <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--muted)]">{doc.abstract}</p>}{doc.html_url && <a className="mt-4 inline-flex text-sm font-semibold underline underline-offset-4" href={doc.html_url} target="_blank" rel="noreferrer">Open primary source ↗</a>}</article>)}</div>}
             </div>
           </div>
         </div>
