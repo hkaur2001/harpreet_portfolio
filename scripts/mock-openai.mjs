@@ -83,6 +83,10 @@ const server = http.createServer(async (req, res) => {
   } else if (kind === "atlas-desk") {
     const request = JSON.parse(body.input[0].content);
     const marker = request.question;
+    if (marker.includes("DESK_TEST_BILLING")) {
+      res.writeHead(402, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: { message: "Synthetic provider billing failure" } })); return;
+    }
     if (marker.includes("DESK_TEST_OUTAGE")) {
       res.writeHead(503, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: { message: "Synthetic provider outage" } })); return;

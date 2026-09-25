@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       } catch (error) { lastError = error; }
     }
     if (process.env.OPENAI_API_KEY && Date.now() - started < 45_000) {
-      try { return NextResponse.json(await runAtlasAgent(input, { apiKey: process.env.OPENAI_API_KEY, endpoint: `${(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "")}/responses`, model: process.env.ATLAS_MODEL || "gpt-5.6-luna", startedAt: started, retryRateLimits: false }), { headers: { "Cache-Control": "no-store" } }); }
+      try { return NextResponse.json(await runAtlasAgent(input, { apiKey: process.env.OPENAI_API_KEY, endpoint: `${(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "")}/responses`, model: process.env.ATLAS_MODEL || "gpt-5.6-luna", startedAt: started, retryRateLimits: !gatewayKey }), { headers: { "Cache-Control": "no-store" } }); }
       catch (error) { lastError = error; }
     }
     throw lastError ?? new Error("Agent reached its time budget.");
