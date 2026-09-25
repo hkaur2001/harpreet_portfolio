@@ -73,6 +73,19 @@ function hybridScore(question: string, doc: KnowledgeDoc) {
   const title = new Set(tokenList(doc.title));
   const content = new Set(tokenList(doc.content));
   const owner = new Set(tokenList(doc.owner));
+  const directTerms = tokenList(question);
+  // A general word such as "approval" cannot make an onboarding document
+  // relevant to a pricing or renewal question.
+  const domains = [
+    new Set(["pric", "discount", "commercial"]),
+    new Set(["renewal"]),
+  ];
+  for (const domain of domains) {
+    if (directTerms.some((term) => domain.has(term)) && ![...domain].some((term) => title.has(term) || content.has(term) || owner.has(term))) return 0;
+  }
+  // Synonyms can rank a match, but cannot turn an unrelated authorized
+  // document into an answer about a restricted topic.
+  if (!directTerms.some((term) => title.has(term) || content.has(term) || owner.has(term))) return 0;
   let weighted = 0;
 
   for (const term of query) {
@@ -140,7 +153,7 @@ export async function POST(request: NextRequest) {
       .slice(0, 3);
 
     const retrievalMode = "authorization-first hybrid retrieval";
-    const strong = ranked.filter((item) => item.score >= 0.12);
+    const strong = ranked.filter((item) => item.score >= 0.2);
 
     if (strong.length === 0) {
       return NextResponse.json({

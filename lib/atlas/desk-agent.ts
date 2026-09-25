@@ -24,12 +24,15 @@ export type DeskAgentProvider = {
   model: string;
   displayModel?: string;
   startedAt?: number;
+  budgetMs?: number;
+  retryRateLimits?: boolean;
 };
 
 export async function runDeskAgent(input: DeskInput, provider?: DeskAgentProvider): Promise<DeskResult> {
   const apiKey = provider?.apiKey ?? process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("NOT_CONFIGURED");
   const started = provider?.startedAt ?? Date.now();
+  const budgetMs = provider?.budgetMs ?? 55_000;
   const model = provider?.model ?? process.env.ATLAS_MODEL ?? "gpt-5.6-luna";
   const endpoint = provider?.endpoint ?? openAiUrl("responses");
   const messages: unknown[] = [{ role: "user", content: JSON.stringify({ task: input.task, taskDescription: deskTasks[input.task], sourceCatalog, question: input.question, reviewerFeedback: input.reviewerFeedback, approvedBrowserRules: input.approvedRules }) }];
@@ -38,19 +41,19 @@ export async function runDeskAgent(input: DeskInput, provider?: DeskAgentProvide
   let modelCalls = 0, providerRetries = 0, inputTokens = 0, outputTokens = 0;
   const ready = () => ["F02", "F04", "F06"].every(id => read.has(id)) && deskTasks[input.task].requiredMetrics.every(id => calculated.has(id));
   async function call(extra: Record<string, unknown>) {
-    if (Date.now() - started > 45_000) throw new Error("TIME_BUDGET");
+    if (Date.now() - started > budgetMs - 2_000) throw new Error("TIME_BUDGET");
     for (let attempt = 0; attempt < 3; attempt++) {
-      const remaining = 55_000 - (Date.now() - started);
+      const remaining = budgetMs - (Date.now() - started);
       if (remaining < 1000) throw new Error("TIME_BUDGET");
       try {
         const result = await fetchJsonWithRetry<ModelResponse>(endpoint, { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ model, instructions: `${instructions} ${narrativeStyle}`, input: messages, reasoning: { effort: "low" }, max_output_tokens: 2200, store: false, ...extra }) }, { attempts: 1, timeoutMs: Math.min(15000, remaining) });
         modelCalls++; inputTokens += result.data.usage?.input_tokens ?? 0; outputTokens += result.data.usage?.output_tokens ?? 0; return result.data;
       } catch (error) {
-        if (attempt === 2 || (error instanceof UpstreamRequestError && !error.retryable)) throw error;
+        if (attempt === 2 || (error instanceof UpstreamRequestError && (!error.retryable || (error.status === 429 && provider?.retryRateLimits === false)))) throw error;
         const delay = error instanceof UpstreamRequestError && error.status === 429
           ? Math.max(1000, error.retryAfterMs ?? 8000 * 2 ** attempt)
           : 1000 * 2 ** attempt;
-        if (55_000 - (Date.now() - started) < delay + 1000) throw error;
+        if (budgetMs - (Date.now() - started) < delay + 1000) throw error;
         providerRetries++; await new Promise(resolve => setTimeout(resolve, delay));
       }
     }

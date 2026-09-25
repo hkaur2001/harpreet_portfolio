@@ -88,7 +88,7 @@ export default function SentinelPage() {
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--signal)]">Implementation depth</p>
           <h2 className="mt-4 max-w-4xl text-balance text-4xl font-semibold tracking-[-0.045em] md:text-6xl">The live interface is only one layer of the project.</h2>
           <p className="mt-5 max-w-3xl text-base leading-7 text-[var(--muted)]">The Sentinel directory includes the FastAPI service, MCP server, PostgreSQL/pgvector schema, simulator fixtures, Docker Compose environment, evaluation and security tests, CI validation, architecture notes, and Terraform reference infrastructure.</p>
-          <div className="mt-8 flex flex-wrap gap-3"><Link href="https://github.com/hkaur2001/harpreet_portfolio/tree/main/sentinel" target="_blank" rel="noreferrer" className="btn-primary rounded-full px-5">Inspect Sentinel source ↗</Link><Link href="/" className="btn-secondary">Back to selected projects</Link></div>
+          <div className="mt-8 flex flex-wrap gap-3"><Link href="https://github.com/hkaur2001/harpreet_portfolio/tree/main/sentinel" target="_blank" rel="noreferrer" className="btn-primary rounded-full px-5">Inspect Sentinel source ↗</Link><Link href="/projects" className="btn-secondary">Back to selected projects</Link></div>
         </div>
       </section>
     </main>
